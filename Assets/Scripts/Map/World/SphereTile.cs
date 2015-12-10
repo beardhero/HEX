@@ -20,8 +20,8 @@ public class SphereTile
   public List<Triangle> faceTris;
   public List<Triangle> sideTris;
   //Checking equality with the center vertex 
-  private SerializableVector3 _center;
-  public SerializableVector3 center{ get; set; }
+  public Vector3 center{ get; set; }
+  public Vector3 origin;
   //Scaling property
   private float _scale = 1;
   public float scale
@@ -58,9 +58,10 @@ public class SphereTile
   }
 
   //Unit SphereTile
-  public SphereTile(Vector3 c)
+  public SphereTile(Vector3 c, Vector3 o)
   {
     center = c;
+    origin = o;
     faceTris = new List<Triangle>();
     neighbors = new int[7];
     neighborDict = new Dictionary<int, SphereTile>();
@@ -122,20 +123,6 @@ public class SphereTile
       }
     }
   }
-  
-  /*
-  public void Smooth()
-  {
-    //Alright let's do some neighbor shit
-    Vector3 average = Vector3.zero;
-    foreach (SphereTile st in neighbors)
-    {
-      (Vector3)average += (Vector3)st.center;
-    }
-    average /= neighbors.Count;
-    scale = average.magnitude;
-  }
-  */
 
   void OnCollisionStay()
   {
@@ -151,77 +138,7 @@ public class SphereTile
 
     //Debug.Log(hexNeighbors.Count);
 
-    return new Hexagon(index, faceTris[0].v1, verts);
-    /*
-    Vector3 c = center;
-    List<Vector3> vertices = new List<Vector3>(), toAdd = new List<Vector3>();
-    float m = .3f;
-
-    vertices.Add(c);
-
-    foreach (Triangle t in faceTris)
-    {
-      toAdd.Clear();
-
-      foreach(Vector3 v in vertices)
-      {
-        // Is v1 not in our list of vertices?
-        if ((t.v1-v).sqrMagnitude > m && (t.v1-c).sqrMagnitude > m)
-        {
-          toAdd.Add(t.v1);
-        }
-        if ((t.v2-v).sqrMagnitude > m && (t.v2-c).sqrMagnitude > m)
-        {
-          toAdd.Add(t.v2);
-        }
-        if ((t.v3-v).sqrMagnitude > m && (t.v3-c).sqrMagnitude > m)
-        {
-          toAdd.Add(t.v3);
-        }
-      }
-
-      foreach (Vector3 v in toAdd)
-        vertices.Add(v);
-
-    }
-
-    if (vertices.Count != 7)
-    {
-      Debug.LogError("Incorrect number of hex vertices on conversion: "+vertices.Count);
-      return null;
-    }
-
-    Vector3[] vert = vertices.ToArray();
-
-    return new Hexagon(vert[1], vert[1], vert[2], vert[3], vert[4], vert[5], vert[6]);
-    */
+    return new Hexagon(index, faceTris[0].v1, verts, origin);
   }
 }
-
-
-
-
-//Compare centers, return true if equal
-/*
-public class SphereTileComparer : IEqualityComparer<SphereTile>
-{
-  public bool Equals(SphereTile x, SphereTile y)
-  {
-    if (x == null || y == null || GetType() != x.GetType() || GetType() != y.GetType())
-    {
-      return false;
-    }
-    return x.center == y.center;
-  }
-
-  public int GetHashCode(SphereTile st)
-  {
-    //Check whether the object is null
-    if (Object.ReferenceEquals(st, null)) return 0;
-
-    int hashSphereTileCenter = st.center == null ? 0 : st.center.GetHashCode();
-    return hashSphereTileCenter;
-  }
-}
-*/
 

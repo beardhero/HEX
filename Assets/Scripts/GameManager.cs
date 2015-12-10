@@ -32,10 +32,10 @@ public class GameManager : MonoBehaviour
   static CreateWorldCache worldCacher;
 
   public static Zone currentZone;
+  public static ZoneManager zoneManager;
   public static ZoneRenderer zoneRenderer;
   public static List<GameObject> currentZoneObjects;
   public static ZoneViewCamera zoneCameraControls;
-  public static ZoneManager zoneManager;
 
   // For combat
   public static GameObject combatManagerObj;
@@ -72,6 +72,8 @@ public class GameManager : MonoBehaviour
       break;
 
       case GameState.ZoneMap:
+        zoneManager = GameObject.FindWithTag("Zone Manager").GetComponent<ZoneManager>();
+        zoneRenderer = zoneManager.GetComponent<ZoneRenderer>();
         BuildZone();
       break;
 
@@ -141,11 +143,8 @@ public class GameManager : MonoBehaviour
     currentZoneObjects = zoneRenderer.RenderZone(currentZone, zoneManager.regularTileSet);
     zoneManager.Initialize(currentZone);
 
-    // --- Round
-    roundManager.Initialize();
-
     // --- Scene
-    zoneCameraControls.Initialize();
+    //zoneCameraControls.Initialize();
 
     // --- Interface
     //mainUI.Initialize(); TURN BACK ON LATER
