@@ -10,9 +10,13 @@ public class WorldManager : MonoBehaviour
   public World activeWorld;
   public TileSet regularTileSet;
   public float maxMag = 10;
+  public static SimplexNoise simplex;
 
   // === Private ===
   bool labelDirections;
+  //@TODO: These are for creating the heights, and are properties which should be saved for each world in the scene, if there ever is going to be more than one.
+  private int octaves, multiplier;
+  private float amplitude, lacunarity, persistence;
 
   // === Cache ===
   WorldRenderer worldRenderer;
@@ -23,6 +27,14 @@ public class WorldManager : MonoBehaviour
   public void Initialize()
   {
     activeWorld = LoadWorld();
+    //Seed the world heights
+    simplex = new SimplexNoise(GameManager.gameSeed);
+    octaves = Random.Range(10, 20);
+    multiplier = Random.Range(15, 25);
+    amplitude = Random.Range(5f, 10f);
+    lacunarity = Random.Range(1.0f, 2.0f);
+    persistence = Random.Range(0.1f, 0.9f);
+    SetHeights();
     currentWorldObject = new GameObject("World");
     currentWorldTrans = currentWorldObject.transform;
 
@@ -38,12 +50,23 @@ public class WorldManager : MonoBehaviour
 
     labelDirections = true;
 
-    DrawHexIndices();
+    //DrawHexIndices();
   }
 
   World LoadWorld()
   {
     return BinaryHandler.ReadData<World>(World.cachePath);
+  }
+
+  void SetHeights()
+  {
+    float s = 2.0f;
+    foreach (HexTile ht in activeWorld.tiles)
+    {
+      //Debug.Log(Mathf.Abs(simplex.coherentNoise(ht.hexagon.center.x, ht.hexagon.center.y, ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, persistence)));
+      ht.hexagon.Scale = 10 + 0.5f * Mathf.Abs(simplex.coherentNoise(ht.hexagon.center.x, ht.hexagon.center.y, ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, persistence)
+                            + 0.5f * Mathf.Abs(simplex.coherentNoise(s*ht.hexagon.center.x, s*ht.hexagon.center.y, s*ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, persistence)));
+    }
   }
 
   void OnDrawGizmos()

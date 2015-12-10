@@ -7,6 +7,24 @@ public class Hexagon
   public int index;
   public SerializableVector3 center, normal, v1, v2, v3, v4, v5, v6;
   public int[] neighbors;
+  private float _scale;
+
+  public float Scale //This will multiply all vectors in the hexagon by the value, if you want to set the scale directly you must first normalize the hexagon
+  {
+    get { return _scale; }
+    set
+    {
+      _scale = value;
+      v1 *= _scale;
+      v2 *= _scale;
+      v3 *= _scale;
+      v4 *= _scale;
+      v5 *= _scale;
+      v6 *= _scale;
+      center *= _scale;
+    }
+  }
+
 
   public Hexagon(int i, Vector3 c, Vector3[] verts, SerializableVector3 origin)
   {
