@@ -51,35 +51,45 @@ public class WorldManager : MonoBehaviour
     if (!labelDirections || activeWorld.tiles.Count == 0)
       return;
 
-    int currentTileX = 0, currentTileY = 0, currentTileXY = 0;
+    int currentTileX = 13, currentTileY = 0, currentTileXY = 0;
 
     // === Draw axes on all tiles ===
     for (int i=0; i<activeWorld.tiles.Count; i++)
     {
-      DrawHexAxes(activeWorld.tiles, activeWorld.origin, i);
+      DrawHexAxes(activeWorld.tiles, activeWorld.origin, i, .1f);
     }
 
     // === Draw Bands Only ===
-    /*
+    // Y-band
+    for (int y=0; y<activeWorld.circumferenceInTiles; y++)
+    {
+      if (currentTileY != -1)
+      {
+        DrawHexAxes(activeWorld.tiles, activeWorld.origin, currentTileY);
+        currentTileY = activeWorld.tiles[currentTileY].GetNeighborID(Direction.Y);
+      }
+    }
+    // XY-band
+    for (int xy=0; xy<activeWorld.circumferenceInTiles; xy++)
+    {
+      if (currentTileXY != -1)
+      {
+        DrawHexAxes(activeWorld.tiles, activeWorld.origin, currentTileXY);
+        currentTileXY = activeWorld.tiles[currentTileXY].GetNeighborID(Direction.XY);
+      }
+    }
+    // X-band
     for (int x=0; x<activeWorld.circumferenceInTiles; x++)
     {
-      for (int y=0; y<activeWorld.circumferenceInTiles; y++)
+      if (currentTileX != -1)
       {
-        for (int xy=0; xy<activeWorld.circumferenceInTiles; xy++)
-        {
-          DrawHexAxes(activeWorld.tiles, activeWorld.origin, currentTileXY);
-          currentTileXY = activeWorld.tiles[currentTileXY].GetNeighborID(Direction.XY);
-        }
-        DrawHexAxes(activeWorld.tiles, activeWorld.origin, currentTileY);
-        currentTileXY = activeWorld.tiles[currentTileY].GetNeighborID(Direction.Y);
+        DrawHexAxes(activeWorld.tiles, activeWorld.origin, currentTileX);
+        currentTileX = activeWorld.tiles[currentTileX].GetNeighborID(Direction.X);
       }
-      DrawHexAxes(activeWorld.tiles, activeWorld.origin, currentTileX);
-      currentTileXY = activeWorld.tiles[currentTileX].GetNeighborID(Direction.X);
     }
-    */
   }
 
-  void DrawHexAxes(List<HexTile> tiles, Vector3 worldOrigin, int index, bool suppressWarnings = true)
+  void DrawHexAxes(List<HexTile> tiles, Vector3 worldOrigin, int index, float scale = .3f, bool suppressWarnings = true)
   {
     if (index == -1)
     {
@@ -104,12 +114,10 @@ public class WorldManager : MonoBehaviour
     {
       Gizmos.color = Color.yellow;
       SerializableVector3 direction = tiles[tiles[index].GetNeighborID(Direction.Y)].hexagon.center - tiles[index].hexagon.center;
-      Gizmos.DrawRay((Vector3)origin, (Vector3)direction*.35f);
+      Gizmos.DrawRay((Vector3)origin, (Vector3)direction*scale);
     }
-    /*
     else if (!suppressWarnings)
       Debug.LogError("Tile "+index+" has no neighbor set in the +Y direction!");
-    */
 
     // XY
     int xy = tiles[index].GetNeighborID(Direction.XY);
@@ -117,20 +125,18 @@ public class WorldManager : MonoBehaviour
     {
       Gizmos.color = Color.blue;
       SerializableVector3 direction = tiles[tiles[index].GetNeighborID(Direction.XY)].hexagon.center - tiles[index].hexagon.center;
-      Gizmos.DrawRay((Vector3)origin, (Vector3)direction*.35f);
+      Gizmos.DrawRay((Vector3)origin, (Vector3)direction*scale);
     }
-    /*
     else if (!suppressWarnings)
       Debug.LogError("Tile "+index+" has no neighbor set in the +XY direction!");
-    */
 
     // X
     int x = tiles[index].GetNeighborID(Direction.X);
     if (x != -1)
     {
       Gizmos.color = Color.red;
-      SerializableVector3 direction = tiles[tiles[index].GetNeighborID(Direction.X)].hexagon.center - tiles[index].hexagon.center;
-      Gizmos.DrawRay((Vector3)origin, (Vector3)direction*.35f);
+      Vector3 direction = tiles[tiles[index].GetNeighborID(Direction.X)].hexagon.center - tiles[index].hexagon.center + tiles[index].hexagon.normal * scale;
+      Gizmos.DrawRay((Vector3)origin, (Vector3)direction*scale);
     }
     else if (!suppressWarnings)
       Debug.LogError("Tile "+index+" has no neighbor set in the +X direction!");

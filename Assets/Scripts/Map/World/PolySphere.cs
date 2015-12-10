@@ -130,17 +130,17 @@ public class PolySphere
       }
       if (st1 == null)
       {
-        st1 = new SphereTile(tri.v1);
+        st1 = new SphereTile(tri.v1, origin);
         sTiles.Add(st1);
       }
       if (st2 == null)
       {
-        st2 = new SphereTile(tri.v2);
+        st2 = new SphereTile(tri.v2, origin);
         sTiles.Add(st2);
       }
       if (st3 == null)
       {
-        st3 = new SphereTile(tri.v3);
+        st3 = new SphereTile(tri.v3, origin);
         sTiles.Add(st3);
       }
 
@@ -227,22 +227,17 @@ public class PolySphere
 
   void TraverseAndAssignNeighbors(List<Hexagon> hexes, List<SphereTile> sTiles)
   {
+    // Set initial seed hex neighbors
+    hexes[0].neighbors = GetLeftHexagonInitialNeighborsAtSubdivion(subdivisions);
+    hexes[hexes[0].neighbors[Direction.NegY]].neighbors = GetRightHexagonInitialNeighborsAtSubdivion(subdivisions);
+
     // === Create three initial bands ===
-    // Starting hex 0
-    hexes[0].neighbors[(int)Direction.Y] = 1;
-    hexes[0].neighbors[(int)Direction.XY] = 2;
-    hexes[0].neighbors[(int)Direction.X] = 3;
-    hexes[0].neighbors[(int)Direction.NegY] = 13;
-    hexes[0].neighbors[(int)Direction.NegXY] = 15;
-    hexes[0].neighbors[(int)Direction.NegX] = 4;
-
-
     int currentHex, lastHex, startingHex, currentWinner;
 
     // --- Traverse +Y ---
     int breaker = 1000;
-    currentHex = 1;
     startingHex = 0;
+    currentHex = hexes[startingHex].neighbors[Direction.Y];
     lastHex = startingHex;
 
     do
@@ -269,11 +264,10 @@ public class PolySphere
     }
 
 
-    // --- Traverse +X+Y ---
+    // --- Traverse +XY ---
     breaker = 1000;
-    startingHex = currentHex;
-    currentHex = 2;  // @TODO
     startingHex = 0;
+    currentHex = hexes[startingHex].neighbors[Direction.XY];
     lastHex = startingHex;
 
     do
@@ -301,11 +295,9 @@ public class PolySphere
     
     // --- Traverse +X ---
     breaker = 1000;
-    startingHex = hexes[0].neighbors[(int)Direction.NegY];
-    currentHex = 10;
+    startingHex = hexes[0].neighbors[Direction.NegY];
+    currentHex = hexes[startingHex].neighbors[Direction.X];
     lastHex = startingHex;
-
-    hexes[startingHex].neighbors[(int)Direction.X] = currentHex;  // Only has to be done for this one tile
 
     do
     {
@@ -338,55 +330,110 @@ public class PolySphere
       // Check Y
       if (hexes[i].neighbors[Direction.Y] == -1)
       {
-        int previous = hexes[i-1].neighbors[Direction.Y];
-        Vector3 direction = hexes[i-1].center - hexes[previous].center;
-        hexes[i].neighbors[Direction.Y] = FindNeighbor(hexes[i].center, direction, potentialNeighbors);
+        Vector3 direction = GetNearbyDefinedNeighborVector(hexes, i, Direction.Y);
+        if (i==3)
+          Debug.Log(direction);
+        int n = FindNeighbor(hexes[i].center, direction, potentialNeighbors);
+        hexes[i].neighbors[Direction.Y] = n;
+        if (hexes[n].neighbors[Direction.NegY] == -1)
+          hexes[n].neighbors[Direction.NegY] = i;
       }
 
       // Check -Y
       if (hexes[i].neighbors[Direction.NegY] == -1)
       {
-        int previous = hexes[i-1].neighbors[Direction.NegY];
-        Vector3 direction = hexes[i-1].center - hexes[previous].center;
-        hexes[i].neighbors[Direction.NegY] = FindNeighbor(hexes[i].center, direction, potentialNeighbors);
+        Vector3 direction = GetNearbyDefinedNeighborVector(hexes, i, Direction.NegY);
+        int n = FindNeighbor(hexes[i].center, direction, potentialNeighbors);
+        hexes[i].neighbors[Direction.NegY] = n;
+        if (hexes[n].neighbors[Direction.Y] == -1)
+          hexes[n].neighbors[Direction.Y] = i;
       }
 
       // Check XY
       if (hexes[i].neighbors[Direction.XY] == -1)
       {
-        int previous = hexes[i-1].neighbors[Direction.XY];
-        Vector3 direction = hexes[i-1].center - hexes[previous].center;
-        hexes[i].neighbors[Direction.XY] = FindNeighbor(hexes[i].center, direction, potentialNeighbors);
+        Vector3 direction = GetNearbyDefinedNeighborVector(hexes, i, Direction.XY);
+        int n = FindNeighbor(hexes[i].center, direction, potentialNeighbors);
+        hexes[i].neighbors[Direction.XY] = n;
+        if (hexes[n].neighbors[Direction.NegXY] == -1)
+          hexes[n].neighbors[Direction.NegXY] = i;
       }
 
       //Check -XY
       if (hexes[i].neighbors[Direction.NegXY] == -1)
       {
-        int previous = hexes[i-1].neighbors[Direction.NegXY];
-        Vector3 direction = hexes[i-1].center - hexes[previous].center;
-        hexes[i].neighbors[Direction.NegXY] = FindNeighbor(hexes[i].center, direction, potentialNeighbors);
+        Vector3 direction = GetNearbyDefinedNeighborVector(hexes, i, Direction.NegXY);
+        int n = FindNeighbor(hexes[i].center, direction, potentialNeighbors);
+        hexes[i].neighbors[Direction.NegXY] = n;
+        if (hexes[n].neighbors[Direction.XY] == -1)
+          hexes[n].neighbors[Direction.XY] = i;
       }
 
       // Check X
       if (hexes[i].neighbors[Direction.X] == -1)
       {
-        int previous = hexes[i-1].neighbors[Direction.X];
-        Vector3 direction = hexes[i-1].center - hexes[previous].center;
-        hexes[i].neighbors[Direction.X] = FindNeighbor(hexes[i].center, direction, potentialNeighbors);
+        Vector3 direction = GetNearbyDefinedNeighborVector(hexes, i, Direction.X);
+        int n = FindNeighbor(hexes[i].center, direction, potentialNeighbors);
+        hexes[i].neighbors[Direction.X] = n;
+        if (hexes[n].neighbors[Direction.NegX] == -1)
+          hexes[n].neighbors[Direction.NegX] = i;
       }
 
       // Check -X
       if (hexes[i].neighbors[Direction.NegX] == -1)
       {
-        int previous = hexes[i-1].neighbors[Direction.NegX];
-        Vector3 direction = hexes[i-1].center - hexes[previous].center;
-        hexes[i].neighbors[Direction.NegX] = FindNeighbor(hexes[i].center, direction, potentialNeighbors);
+        Vector3 direction = GetNearbyDefinedNeighborVector(hexes, i, Direction.NegX);
+        int n = FindNeighbor(hexes[i].center, direction, potentialNeighbors);
+        hexes[i].neighbors[Direction.NegX] = n;
+        if (hexes[n].neighbors[Direction.X] == -1)
+          hexes[n].neighbors[Direction.X] = i;
       }
 
     }
   }
 
-  int FindNeighbor(SerializableVector3 center, Vector3 direction, List<SphereTile> potentialNeighbors)
+  Vector3 GetNearbyDefinedNeighborVector(List<Hexagon> hexes, int index, int direction)
+  {
+    if (index == -1)
+    {
+      Debug.LogError("null index");
+      return Vector3.zero;
+    }
+
+    int winner2 = -1, winner1 = -1;
+
+    for (int i=0;i<6;i++)
+    {
+      int neighbor = hexes[index].neighbors[i], neighNeighb = -1;
+
+      if (neighbor != -1)
+      {
+       
+        neighNeighb = hexes[neighbor].neighbors[direction];
+        if (neighNeighb != -1)
+        {
+          winner1 = neighbor;
+          winner2 = neighNeighb;
+          break;
+        }
+      }
+
+      if (index==3)
+      {
+        Debug.Log("3's neighb: "+neighbor+"  3's neighb's y-neighbor: "+neighNeighb);
+      }
+    }
+
+    if (winner2 == -1 || winner1 == -1)
+    {
+      Debug.LogError("no "+Direction.ToString(direction)+" neighbor found for index "+index);
+      return Vector3.zero;
+    }
+
+    return hexes[winner1].center - hexes[winner2].center;
+  }
+
+  int FindNeighbor(Vector3 center, Vector3 direction, List<SphereTile> potentialNeighbors)
   {
     float winningAngle = 190, angle=9999;
     int winningNeighborIndex = -1;
@@ -475,16 +522,16 @@ public class PolySphere
     output.Add(new Triangle(vertices[10], vertices[11], vertices[7]));  // 19
 
     // Assign initial neighbors
-    output[0].AssignNeighbors(output[1], output[4], output[18]);
-    output[1].AssignNeighbors(output[2], output[0], output[10]);
-    output[2].AssignNeighbors(output[1], output[12],output[3]);
-    output[3].AssignNeighbors(output[2], output[14],output[4]);
-    output[4].AssignNeighbors(output[3], output[16],output[0]);
-    output[5].AssignNeighbors(output[19],output[6],output[9]);
-    output[6].AssignNeighbors(output[5], output[17],output[7]);
-    output[7].AssignNeighbors(output[6], output[15],output[8]);
-    output[8].AssignNeighbors(output[7], output[13],output[9]);
-    output[9].AssignNeighbors(output[8], output[11],output[5]);
+    output[0].AssignNeighbors(output[1],  output[4], output[18]);
+    output[1].AssignNeighbors(output[2],  output[0], output[10]);
+    output[2].AssignNeighbors(output[1],  output[12],output[3]);
+    output[3].AssignNeighbors(output[2],  output[14],output[4]);
+    output[4].AssignNeighbors(output[3],  output[16],output[0]);
+    output[5].AssignNeighbors(output[19], output[6], output[9]);
+    output[6].AssignNeighbors(output[5],  output[17],output[7]);
+    output[7].AssignNeighbors(output[6],  output[15],output[8]);
+    output[8].AssignNeighbors(output[7],  output[13],output[9]);
+    output[9].AssignNeighbors(output[8],  output[11],output[5]);
     output[10].AssignNeighbors(output[1], output[19],output[11]);
     output[11].AssignNeighbors(output[10],output[9], output[12]);
     output[12].AssignNeighbors(output[11],output[13],output[2]);
@@ -505,5 +552,33 @@ public class PolySphere
     }
 
     return output;
+  }
+
+  public static int[] GetLeftHexagonInitialNeighborsAtSubdivion(int subdivisionLevel)
+  {
+    switch (subdivisionLevel)
+    {
+                      // Y, XY, X, -Y, -XY -X
+      case 1:
+        return new int[]{1,2,3,13,15,4};
+      case 2:
+        return new int[]{1,2,3,9,10,4};
+      default:
+        return new int[6];
+    }
+  }
+
+  public static int[] GetRightHexagonInitialNeighborsAtSubdivion(int subdivisionLevel)
+  {
+    switch (subdivisionLevel)
+    {
+                      // Y, XY, X, -Y, -XY -X
+      case 1:
+        return new int[]{0,3,10,12,14,15};
+      case 2:
+        return new int[]{0,3,46,50,11,10};
+      default:
+        return new int[6];
+    }
   }
 }
