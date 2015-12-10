@@ -227,42 +227,32 @@ public class PolySphere
 
   void TraverseAndAssignNeighbors(List<Hexagon> hexes, List<SphereTile> sTiles)
   {
+    // === Create three initial bands ===
     // Starting hex 0
     hexes[0].neighbors[(int)Direction.Y] = 1;
     hexes[0].neighbors[(int)Direction.XY] = 2;
     hexes[0].neighbors[(int)Direction.X] = 3;
-    hexes[0].neighbors[(int)Direction.NegY] = 4;
-    hexes[0].neighbors[(int)Direction.NegXY] = 5;
-    hexes[0].neighbors[(int)Direction.NegX] = 6;
+    hexes[0].neighbors[(int)Direction.NegY] = 13;
+    hexes[0].neighbors[(int)Direction.NegXY] = 15;
+    hexes[0].neighbors[(int)Direction.NegX] = 4;
 
 
-    int currentHex = 1, startingHex = 0, lastHex = 0, currentWinner;
+    int currentHex, lastHex, startingHex, currentWinner;
 
     // --- Traverse +Y ---
     int breaker = 1000;
-    startingHex = currentHex;
+    currentHex = 1;
+    startingHex = 0;
+    lastHex = startingHex;
 
     do
     {
       SerializableVector3 currentCenter = hexes[currentHex].center;
       SerializableVector3 currentYDirection = hexes[lastHex].center - currentCenter;
-      float winningAngle = 190, angle=9999;
-      int winningNeighborIndex = 0;
-
+      
       List<SphereTile> potentialNeighbors = sTiles[currentHex].neighborDict.Values.ToList();
 
-      for (int i=0; i<potentialNeighbors.Count; i++)
-      {
-        angle = Vector3.Angle(currentCenter-potentialNeighbors[i].center, currentYDirection);
-
-        if (angle < winningAngle)
-        {
-          winningAngle = angle;
-          winningNeighborIndex = i;
-        }
-      }
-
-      int nextIndex = potentialNeighbors[winningNeighborIndex].index;
+      int nextIndex = FindNeighbor(currentCenter, currentYDirection, potentialNeighbors);
 
       hexes[currentHex].neighbors[(int)Direction.Y] = nextIndex;
       hexes[currentHex].neighbors[(int)Direction.NegY] = lastHex;
@@ -284,29 +274,15 @@ public class PolySphere
     startingHex = currentHex;
     currentHex = 2;  // @TODO
     startingHex = 0;
-    lastHex = 0;
+    lastHex = startingHex;
 
     do
     {
       SerializableVector3 currentCenter = hexes[currentHex].center;
       SerializableVector3 currentXYDirection = hexes[lastHex].center - currentCenter;
-      float winningAngle = 190, angle=9999;
-      int winningNeighborIndex = 0;
 
       List<SphereTile> potentialNeighbors = sTiles[currentHex].neighborDict.Values.ToList();
-
-      for (int i=0; i<potentialNeighbors.Count; i++)
-      {
-        angle = Vector3.Angle(currentCenter-potentialNeighbors[i].center, currentXYDirection);
-
-        if (angle < winningAngle)
-        {
-          winningAngle = angle;
-          winningNeighborIndex = i;
-        }
-      }
-
-      int nextIndex = potentialNeighbors[winningNeighborIndex].index;
+      int nextIndex = FindNeighbor(currentCenter, currentXYDirection, potentialNeighbors);
 
       hexes[currentHex].neighbors[(int)Direction.XY] = nextIndex;
       hexes[currentHex].neighbors[(int)Direction.NegXY] = lastHex;
@@ -322,40 +298,27 @@ public class PolySphere
       Debug.LogError("No end was found to directional band during neighbor +X+Y traversal (Hit breaker limit).");
     }
 
-    /*
-    // --- Traverse +X (Begin at index 1 this time) ---
+    
+    // --- Traverse +X ---
     breaker = 1000;
     startingHex = hexes[0].neighbors[(int)Direction.NegY];
-    currentHex = 13;
+    currentHex = 10;
     lastHex = startingHex;
+
+    hexes[startingHex].neighbors[(int)Direction.X] = currentHex;  // Only has to be done for this one tile
 
     do
     {
       SerializableVector3 currentCenter = hexes[currentHex].center;
-      float winningAngle = 190, angle=9999;
-      int winningNeighborIndex = 0;
-
+      SerializableVector3 currentXDirection = hexes[lastHex].center - currentCenter;
+      
       List<SphereTile> potentialNeighbors = sTiles[currentHex].neighborDict.Values.ToList();
-
-      SerializableVector3 currentXDirection = hexes[hexes[0].neighbors[(int)Direction.X]].center - hexes[0].center;
-
-      for (int i=0; i<potentialNeighbors.Count; i++)
-      {
-        angle = Vector3.Angle(currentCenter-potentialNeighbors[i].center, currentXDirection);
-
-        if (angle < winningAngle)
-        {
-          winningAngle = angle;
-          winningNeighborIndex = i;
-        }
-      }
-
-      int nextIndex = potentialNeighbors[winningNeighborIndex].index;
+      int nextIndex = FindNeighbor(currentCenter, currentXDirection, potentialNeighbors);
 
       hexes[currentHex].neighbors[(int)Direction.X] = nextIndex;
       hexes[currentHex].neighbors[(int)Direction.NegX] = lastHex;
 
-      // Move to next y
+      // Move to next x
       lastHex = currentHex;
       currentHex = nextIndex;
       currentXDirection = hexes[lastHex].center - currentCenter;
@@ -364,10 +327,82 @@ public class PolySphere
     while (currentHex != startingHex && breaker > 0);
     if (breaker < 1)
     {
-      Debug.LogError("No end was found to directional band during neighbor +X+Y traversal (Hit breaker limit).");
+      Debug.LogError("No end was found to directional band during neighbor +X traversal (Hit breaker limit).");
     }
-    */
     
+    // === Define remaining neighbors ===
+    for (int i=1; i<hexes.Count;i++)
+    {
+      List<SphereTile> potentialNeighbors = sTiles[i].neighborDict.Values.ToList();
+
+      // Check Y
+      if (hexes[i].neighbors[Direction.Y] == -1)
+      {
+        int previous = hexes[i-1].neighbors[Direction.Y];
+        Vector3 direction = hexes[i-1].center - hexes[previous].center;
+        hexes[i].neighbors[Direction.Y] = FindNeighbor(hexes[i].center, direction, potentialNeighbors);
+      }
+
+      // Check -Y
+      if (hexes[i].neighbors[Direction.NegY] == -1)
+      {
+        int previous = hexes[i-1].neighbors[Direction.NegY];
+        Vector3 direction = hexes[i-1].center - hexes[previous].center;
+        hexes[i].neighbors[Direction.NegY] = FindNeighbor(hexes[i].center, direction, potentialNeighbors);
+      }
+
+      // Check XY
+      if (hexes[i].neighbors[Direction.XY] == -1)
+      {
+        int previous = hexes[i-1].neighbors[Direction.XY];
+        Vector3 direction = hexes[i-1].center - hexes[previous].center;
+        hexes[i].neighbors[Direction.XY] = FindNeighbor(hexes[i].center, direction, potentialNeighbors);
+      }
+
+      //Check -XY
+      if (hexes[i].neighbors[Direction.NegXY] == -1)
+      {
+        int previous = hexes[i-1].neighbors[Direction.NegXY];
+        Vector3 direction = hexes[i-1].center - hexes[previous].center;
+        hexes[i].neighbors[Direction.NegXY] = FindNeighbor(hexes[i].center, direction, potentialNeighbors);
+      }
+
+      // Check X
+      if (hexes[i].neighbors[Direction.X] == -1)
+      {
+        int previous = hexes[i-1].neighbors[Direction.X];
+        Vector3 direction = hexes[i-1].center - hexes[previous].center;
+        hexes[i].neighbors[Direction.X] = FindNeighbor(hexes[i].center, direction, potentialNeighbors);
+      }
+
+      // Check -X
+      if (hexes[i].neighbors[Direction.NegX] == -1)
+      {
+        int previous = hexes[i-1].neighbors[Direction.NegX];
+        Vector3 direction = hexes[i-1].center - hexes[previous].center;
+        hexes[i].neighbors[Direction.NegX] = FindNeighbor(hexes[i].center, direction, potentialNeighbors);
+      }
+
+    }
+  }
+
+  int FindNeighbor(SerializableVector3 center, Vector3 direction, List<SphereTile> potentialNeighbors)
+  {
+    float winningAngle = 190, angle=9999;
+    int winningNeighborIndex = -1;
+
+    for (int i=0; i<potentialNeighbors.Count; i++)
+    {
+      angle = Vector3.Angle(center-potentialNeighbors[i].center, direction);
+
+      if (angle < winningAngle)
+      {
+        winningAngle = angle;
+        winningNeighborIndex = i;
+      }
+    }
+
+    return potentialNeighbors[winningNeighborIndex].index;
   }
 
   public void ScaleSimplex(SimplexNoise simplex, int octaves, int multiplier, float amplitude, float lacunarity, float persistence)

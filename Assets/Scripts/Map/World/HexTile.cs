@@ -14,8 +14,8 @@ public class HexTile
     hexagon = h;
   }
 
-  public int GetNeighborID(Direction dir)
+  public int GetNeighborID(int dir)
   {
-    return hexagon.neighbors[(int)dir];
+    return hexagon.neighbors[dir];
   }
 }

@@ -20,6 +20,9 @@ public class World
   public AxisTilt tilt;
 
   public SerializableVector3 origin;
+  public int circumferenceInTiles;
+  public float circumference, radius;
+
 
   public List<HexTile> tiles;
 
@@ -45,6 +48,11 @@ public class World
     {
       tiles.Add(new HexTile(h));
     }
+
+    Vector3 side1 = (Vector3)((tiles[0].hexagon.v1 + tiles[0].hexagon.v2) / 2.0f);
+    radius = (tiles[0].hexagon.v1-origin).magnitude;
+    circumference = Mathf.PI * radius * 2.0f;
+    circumferenceInTiles = 10;//(int)Mathf.Ceil(circumference / side1.magnitude);
   }
 
   public void PrepForCache(int scale, int subdivisions)

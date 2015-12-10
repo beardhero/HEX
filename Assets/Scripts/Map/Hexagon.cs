@@ -1,16 +1,17 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public enum Direction
+public static class Direction
 {
-  Y,      // 0, 1
-  XY,     // 1, 1
-  X,      // 1, 0
-  NegY,   // 0, -1
-  NegXY,  // -1, -1
-  NegX,   // -1, 0
-  Count
+  public const int  Y=0,      // 0, 1
+  XY=1,     // 1, 1
+  X=2,      // 1, 0
+  NegY=3,   // 0, -1
+  NegXY=4,  // -1, -1
+  NegX=5,   // -1, 0
+  Count=6;
 }
+
 
 [System.Serializable]
 public class Hexagon

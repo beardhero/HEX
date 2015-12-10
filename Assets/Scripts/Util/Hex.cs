@@ -47,7 +47,7 @@ public class Hex
     return TileOrigin(tileCoordinate) + new Vector3(halfWidth, 0, height/2);
   }
 
-  public static Direction RotateDirection(Direction direction, int amount)
+  public static int RotateDirection(int direction, int amount)
   {
     //Let's make sure our directions stay within the enumerated values.
     if (direction < Direction.XY ||
@@ -60,20 +60,20 @@ public class Hex
    //Now we need to make sure direction stays within the proper range.
    //C# does not allow modulus operations on enums, so we have to convert to and from int.
 
-   int n_dir = (int)direction % (int)Direction.Count;
+   int n_dir = direction % Direction.Count;
 
-   if (n_dir < 0) n_dir = (int)Direction.Count + n_dir;
-       direction = (Direction)n_dir;
+   if (n_dir < 0) n_dir = Direction.Count + n_dir;
+       direction = n_dir;
 
    return direction;
   }
 
-  public static Direction Opposite(Direction direction)
+  public static int Opposite(int direction)
   {
     return RotateDirection(direction, 3);
   }
 
-  public static Vector2 Neighbor(Vector2 tile, Direction direction)
+  public static Vector2 Neighbor(Vector2 tile, int direction)
   {
     if (tile.y % 2 == 0) //Is this row even?
     {

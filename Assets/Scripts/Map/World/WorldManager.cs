@@ -51,40 +51,52 @@ public class WorldManager : MonoBehaviour
     if (!labelDirections || activeWorld.tiles.Count == 0)
       return;
 
-    int currentTile = 0;
+    int currentTileX = 0, currentTileY = 0, currentTileXY = 0;
 
-    // Traverse +y
-    for (int i=0;i<10;i++)
+    // === Draw axes on all tiles ===
+    for (int i=0; i<activeWorld.tiles.Count; i++)
     {
-      DrawHexAxes(activeWorld.tiles, activeWorld.origin, currentTile);
-      int n = activeWorld.tiles[currentTile].GetNeighborID(Direction.Y);
-      currentTile = activeWorld.tiles[n].index;
+      DrawHexAxes(activeWorld.tiles, activeWorld.origin, i);
     }
 
-    // Traverse +X+Y
-    currentTile = 0;
-
-    for (int i=0;i<10;i++)
+    // === Draw Bands Only ===
+    /*
+    for (int x=0; x<activeWorld.circumferenceInTiles; x++)
     {
-      DrawHexAxes(activeWorld.tiles, activeWorld.origin, currentTile);
-      int n  = activeWorld.tiles[currentTile].GetNeighborID(Direction.XY);
-      currentTile = activeWorld.tiles[n].index;
+      for (int y=0; y<activeWorld.circumferenceInTiles; y++)
+      {
+        for (int xy=0; xy<activeWorld.circumferenceInTiles; xy++)
+        {
+          DrawHexAxes(activeWorld.tiles, activeWorld.origin, currentTileXY);
+          currentTileXY = activeWorld.tiles[currentTileXY].GetNeighborID(Direction.XY);
+        }
+        DrawHexAxes(activeWorld.tiles, activeWorld.origin, currentTileY);
+        currentTileXY = activeWorld.tiles[currentTileY].GetNeighborID(Direction.Y);
+      }
+      DrawHexAxes(activeWorld.tiles, activeWorld.origin, currentTileX);
+      currentTileXY = activeWorld.tiles[currentTileX].GetNeighborID(Direction.X);
     }
-
-    // Traverse +X
-    currentTile = 13;
-
-    for (int i=0;i<10;i++)
-    {
-      DrawHexAxes(activeWorld.tiles, activeWorld.origin, currentTile);
-      int n  = activeWorld.tiles[currentTile].GetNeighborID(Direction.X);
-      currentTile = activeWorld.tiles[n].index;
-    }
+    */
   }
 
-  void DrawHexAxes(List<HexTile> tiles, Vector3 worldOrigin, int index)
+  void DrawHexAxes(List<HexTile> tiles, Vector3 worldOrigin, int index, bool suppressWarnings = true)
   {
-    SerializableVector3 origin = (tiles[index].hexagon.center + (SerializableVector3)worldOrigin) * 1.05f;
+    if (index == -1)
+    {
+      Debug.LogError("Invalid index: -1");
+      return;
+    }
+
+    SerializableVector3 origin = new SerializableVector3();
+    try
+    {
+      origin = (tiles[index].hexagon.center + (SerializableVector3)worldOrigin) * 1.05f;
+    }
+    catch(System.Exception e)
+    {
+      Debug.LogError("Error accessing tile "+ index+": "+e);
+      return;
+    }
 
     // Y
     int y = tiles[index].GetNeighborID(Direction.Y);
@@ -94,6 +106,10 @@ public class WorldManager : MonoBehaviour
       SerializableVector3 direction = tiles[tiles[index].GetNeighborID(Direction.Y)].hexagon.center - tiles[index].hexagon.center;
       Gizmos.DrawRay((Vector3)origin, (Vector3)direction*.35f);
     }
+    /*
+    else if (!suppressWarnings)
+      Debug.LogError("Tile "+index+" has no neighbor set in the +Y direction!");
+    */
 
     // XY
     int xy = tiles[index].GetNeighborID(Direction.XY);
@@ -103,6 +119,10 @@ public class WorldManager : MonoBehaviour
       SerializableVector3 direction = tiles[tiles[index].GetNeighborID(Direction.XY)].hexagon.center - tiles[index].hexagon.center;
       Gizmos.DrawRay((Vector3)origin, (Vector3)direction*.35f);
     }
+    /*
+    else if (!suppressWarnings)
+      Debug.LogError("Tile "+index+" has no neighbor set in the +XY direction!");
+    */
 
     // X
     int x = tiles[index].GetNeighborID(Direction.X);
@@ -112,6 +132,8 @@ public class WorldManager : MonoBehaviour
       SerializableVector3 direction = tiles[tiles[index].GetNeighborID(Direction.X)].hexagon.center - tiles[index].hexagon.center;
       Gizmos.DrawRay((Vector3)origin, (Vector3)direction*.35f);
     }
+    else if (!suppressWarnings)
+      Debug.LogError("Tile "+index+" has no neighbor set in the +X direction!");
   }
 
   void DrawHexIndices()
