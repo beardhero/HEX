@@ -15,12 +15,13 @@ public class Triangle
   //public Triangle newnx, newny, newnz;
   
   // Called for subdivisions
-  public Triangle(SerializableVector3 x, SerializableVector3 y, SerializableVector3 z, Triangle p, TriforcePosition tp, int sl)
+  public Triangle(Vector3 x, Vector3 y, Vector3 z, Triangle p, TriforcePosition tp, int sl)
   {
     v1 = x;
     v2 = y;
     v3 = z;
     center = (v1 + v2 + v3) / 3;
+
     //instance = this;
     //parent = p;
     triforcePosition = tp;
@@ -29,12 +30,12 @@ public class Triangle
   }
 
   // Called for initial polygon
-  public Triangle(SerializableVector3 x, SerializableVector3 y, SerializableVector3 z)
+  public Triangle(Vector3 x, Vector3 y, Vector3 z)
   {
     v1 = x;
     v2 = y;
     v3 = z;
-    center = (v1 + v2 + v3) / 3;
+    center = (v1 + v2 + v3) / 3.0f;
     //instance = this;
     //parent = null;
     index = -1;

@@ -35,7 +35,7 @@ public class WorldRenderer : MonoBehaviour
     MeshFilter myFilter = output.GetComponent<MeshFilter>();
     MeshCollider myCollider = output.GetComponent<MeshCollider>();
 
-    SerializableVector3 origin = Vector3.zero;
+    SerializableVector3 origin = world.origin;
     Vector2 uv0 = Vector2.zero,
           uv1 = new Vector2(.5f, 1),
           uv2 = new Vector2(1, 0);

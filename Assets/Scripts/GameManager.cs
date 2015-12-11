@@ -42,7 +42,7 @@ public class GameManager : MonoBehaviour
   public static CombatManager combatManager;
   public static RoundManager roundManager;
   
-
+  // *** Main Initializer ***
   void Awake ()
   {
     myTrans = transform;
@@ -50,8 +50,9 @@ public class GameManager : MonoBehaviour
     if (Camera.main)
       zoneCameraControls = Camera.main.GetComponent<ZoneViewCamera>();
 
-    currentZone = new Zone(128); // Required so Hex doesn't null ref currentZone
-    Hex.Initialize();
+      // @TODO: Make these a singleton pattern
+        currentZone = new Zone(128); // Required so Hex doesn't null ref currentZone
+        Hex.Initialize();
 
     // Ideally, the only place state is manually set.
     state = beginningState;
@@ -61,9 +62,7 @@ public class GameManager : MonoBehaviour
       case GameState.WorldDuel:
         InitializeWorld();
 
-        combatManagerObj = GameObject.FindWithTag("Combat Manager");
-        combatManager = combatManagerObj.GetComponent<CombatManager>();
-        combatManager.Initialize();
+        InitializeCombat();
         combatManager.BeginDuel();
       break;
 
@@ -72,18 +71,14 @@ public class GameManager : MonoBehaviour
       break;
 
       case GameState.ZoneMap:
-        zoneManager = GameObject.FindWithTag("Zone Manager").GetComponent<ZoneManager>();
-        zoneRenderer = zoneManager.GetComponent<ZoneRenderer>();
-        BuildZone();
+        InitializeZone();
       break;
 
       case GameState.Caching:
+        InitializeWorld();
 
-        worldManagerObj = GameObject.FindWithTag("World Manager");
-        worldManager = worldManagerObj.GetComponent<WorldManager>();
         worldCacher = worldManagerObj.GetComponent<CreateWorldCache>();
         worldCacher.BuildCache(worldManager.activeWorld);
-        worldManager.Initialize();
       break;
 
       default:
@@ -96,11 +91,21 @@ public class GameManager : MonoBehaviour
   {
     worldManagerObj = GameObject.FindWithTag("World Manager");
     worldManager = worldManagerObj.GetComponent<WorldManager>();
-    worldManager.Initialize();
+    currentWorld = worldManager.Initialize();
   }
 
-  void BuildZone()
+  void InitializeCombat()
   {
+    combatManagerObj = GameObject.FindWithTag("Combat Manager");
+    combatManager = combatManagerObj.GetComponent<CombatManager>();
+    combatManager.Initialize(currentWorld);
+  }
+
+  void InitializeZone()
+  {
+    zoneManager = GameObject.FindWithTag("Zone Manager").GetComponent<ZoneManager>();
+    zoneRenderer = zoneManager.GetComponent<ZoneRenderer>();
+
     // --- Input
 
     // --- Network
@@ -142,20 +147,6 @@ public class GameManager : MonoBehaviour
 
     currentZoneObjects = zoneRenderer.RenderZone(currentZone, zoneManager.regularTileSet);
     zoneManager.Initialize(currentZone);
-
-    // --- Scene
-    //zoneCameraControls.Initialize();
-
-    // --- Interface
-    //mainUI.Initialize(); TURN BACK ON LATER
-  }
-
-  void Update()
-  {
-    if (Input.GetKeyUp(KeyCode.Space))
-    {
-      BuildZone();
-    }
   }
 
   void OnGUI()

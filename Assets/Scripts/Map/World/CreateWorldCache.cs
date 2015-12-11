@@ -3,7 +3,8 @@ using System.Collections;
 
 public class CreateWorldCache : MonoBehaviour {
 
-  public int scale = 10, subdivisions = 3;
+  public float scale = 5;
+  public int subdivisions = 3;
 
 	public void BuildCache  (World world) 
   {

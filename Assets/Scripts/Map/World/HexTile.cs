@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 [System.Serializable]
 public class HexTile
@@ -17,5 +18,10 @@ public class HexTile
   public int GetNeighborID(int dir)
   {
     return hexagon.neighbors[dir];
+  }
+
+  public HexTile GetNeighbor(List<HexTile> tiles, int dir)
+  {
+    return tiles[hexagon.neighbors[dir]];
   }
 }
