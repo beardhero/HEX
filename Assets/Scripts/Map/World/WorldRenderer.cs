@@ -87,7 +87,7 @@ public class WorldRenderer : MonoBehaviour
         // T2
         vertices.Add(ht.hexagon.v3);
         normals.Add((origin + ht.hexagon.v3));
-        uvs.Add(uv2 + uvOffset);
+        uvs.Add(uv0 + uvOffset);
 
         triangles.Add(centerIndex);
         triangles.Add(vertices.Count - 2);
@@ -105,7 +105,7 @@ public class WorldRenderer : MonoBehaviour
         // T4
         vertices.Add(ht.hexagon.v5);
         normals.Add((origin + ht.hexagon.v5));
-        uvs.Add(uv2 + uvOffset);
+        uvs.Add(uv0 + uvOffset);
 
         triangles.Add(centerIndex);
         triangles.Add(vertices.Count - 2);

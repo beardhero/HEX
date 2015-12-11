@@ -14,7 +14,7 @@ public class WorldManager : MonoBehaviour
 
   // === Private ===
   bool labelDirections;
-  //@TODO: These are for creating the heights, and are properties which should be saved for each world in the scene, if there ever is going to be more than one.
+  //@TODO: These are for creating the heights, and are properties which should be serialized when we go to persistence.
   private int octaves, multiplier;
   private float amplitude, lacunarity, persistence;
 
