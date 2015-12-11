@@ -491,7 +491,7 @@ public class PolySphere
     foreach (SphereTile st in sTiles)
     {
       float height = Mathf.Abs(simplex.coherentNoise(st.center.x, st.center.y, st.center.z, octaves, multiplier, amplitude, lacunarity, persistence));
-      st.scale *= 24*(1 + height*100);
+      st.scale *= (1 + height*100);
     }
   }
   

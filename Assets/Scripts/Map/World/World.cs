@@ -50,9 +50,11 @@ public class World
     }
 
     Vector3 side1 = (Vector3)((tiles[0].hexagon.v1 + tiles[0].hexagon.v2) / 2.0f);
+    Vector3 side2 = (tiles[0].hexagon.v4 + tiles[0].hexagon.v5) / 2.0f;
+    Vector3 dividingSide = side1 - side2;
     radius = (tiles[0].hexagon.v1-origin).magnitude;
     circumference = Mathf.PI * radius * 2.0f;
-    circumferenceInTiles = 10;//(int)Mathf.Ceil(circumference / side1.magnitude);
+    circumferenceInTiles = (int)Mathf.Ceil(circumference / dividingSide.magnitude);
   }
 
   public void PrepForCache(float scale, int subdivisions)
