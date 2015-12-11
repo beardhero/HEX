@@ -1,14 +1,32 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public abstract class Command{}
+public abstract class Command
+{
+  public Unit unit;
+  public float duration;
+  public abstract void Execute();
+}
 
 public class MoveCommand : Command
 {
-  public HexTile target;
-  public MoveCommand()
+  int direction, distance;
+  public MoveCommand(Unit u, int dir, int dist, float dur)
   {
-    //HexTile targ
-    //target = targ;
+    unit = u;
+    direction = dir;
+    distance = dist;
+    duration = dur;
+  }
+
+  public override void Execute()
+  {
+    HexTile t = CombatManager.activeWorld.tiles[unit.currentLocation].GetNeighbor(CombatManager.activeWorld.tiles,direction);
+    for (int i=1; i<distance; i++)
+    {
+      t = CombatManager.activeWorld.tiles[unit.currentLocation].GetNeighbor(CombatManager.activeWorld.tiles,direction);
+    }
+    
+    CombatManager.instance.StartCoroutine(unit.actor.MoveToTile(t, duration));
   }
 }

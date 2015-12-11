@@ -7,9 +7,11 @@ public class WorldManager : MonoBehaviour
 {
   // === Public ===
   public Transform textMeshPrefab;
-  public World activeWorld;
+  [HideInInspector] public World activeWorld;
   public TileSet regularTileSet;
   public float maxMag = 10;
+  public float worldScale;
+  public int worldSubdivisions;
 
   // === Private ===
   bool labelDirections;
@@ -20,9 +22,16 @@ public class WorldManager : MonoBehaviour
   Transform currentWorldTrans;
   //int layermask; @TODO: stuff
 
-  public void Initialize()
+  public World Initialize(bool loadWorld = false)
   {
-    activeWorld = LoadWorld();
+    if (loadWorld)
+      activeWorld = LoadWorld();
+    else
+    {
+      activeWorld = new World();
+      activeWorld.PrepForCache(worldScale, worldSubdivisions);
+    }
+
     currentWorldObject = new GameObject("World");
     currentWorldTrans = currentWorldObject.transform;
 
@@ -39,6 +48,8 @@ public class WorldManager : MonoBehaviour
     labelDirections = true;
 
     DrawHexIndices();
+
+    return activeWorld;
   }
 
   World LoadWorld()
@@ -47,6 +58,11 @@ public class WorldManager : MonoBehaviour
   }
 
   void OnDrawGizmos()
+  {
+    //DrawAxes();
+  }
+
+  void DrawAxes()
   {
     if (!labelDirections || activeWorld.tiles.Count == 0)
       return;
@@ -146,7 +162,7 @@ public class WorldManager : MonoBehaviour
   {
     foreach (HexTile ht in activeWorld.tiles)
     {
-      Transform t = (Transform)Instantiate(textMeshPrefab, (ht.hexagon.center-activeWorld.origin)*1.05f, Quaternion.LookRotation(activeWorld.origin-ht.hexagon.center));
+      Transform t = (Transform)Instantiate(textMeshPrefab, (ht.hexagon.center-activeWorld.origin)*1.01f, Quaternion.LookRotation(activeWorld.origin-ht.hexagon.center));
       TextMesh x = t.GetComponent<TextMesh>();
       x.text = ht.index.ToString();
       t.parent = currentWorldTrans;

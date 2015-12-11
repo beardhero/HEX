@@ -24,7 +24,7 @@ public class World
   public float circumference, radius;
 
 
-  public List<HexTile> tiles;
+  [HideInInspector] public List<HexTile> tiles;
 
   public World()
   {
@@ -55,11 +55,11 @@ public class World
     circumferenceInTiles = 10;//(int)Mathf.Ceil(circumference / side1.magnitude);
   }
 
-  public void PrepForCache(int scale, int subdivisions)
+  public void PrepForCache(float scale, int subdivisions)
   {
     if (tiles == null || tiles.Count == 0)
     {
-      PolySphere sphere = new PolySphere(Vector3.zero, scale,subdivisions);
+      PolySphere sphere = new PolySphere(Vector3.zero, scale, subdivisions);
       CacheHexes(sphere);
     }
     else

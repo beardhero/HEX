@@ -5,12 +5,10 @@ public class RoundManager : MonoBehaviour
 {
   public Unit unitToSpawn;
 
-  ActorSpawner actorSpawner;
   LayerMask  layermask;
 
   public void Initialize()
   {
-    actorSpawner = GetComponent<ActorSpawner>();
     layermask = 1<<8;
 
     SpawnUnits();
@@ -18,7 +16,7 @@ public class RoundManager : MonoBehaviour
 
   void SpawnUnits()
   {
-    actorSpawner.SpawnUnit(null, unitToSpawn, new IntCoord(2,2));
+
   }
 
   public void UpdateRound()
@@ -42,7 +40,7 @@ public class RoundManager : MonoBehaviour
       if (hexCoordSelected.x == -1)
         return;
 
-      actorSpawner.SpawnUnit(null, unitToSpawn, hexCoordSelected);
+      //actorSpawner.SpawnUnit(null, unitToSpawn, hexCoordSelected);
 
       Debug.Log("Ray at "+hexCoordSelected.x+","+hexCoordSelected.y);
     }

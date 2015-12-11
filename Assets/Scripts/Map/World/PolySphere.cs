@@ -6,8 +6,8 @@ using System.Linq;
 public class PolySphere
 {
   public Vector3 origin;
-  public int subdivisions = 3;
-  public int scale = 1;
+  public int subdivisions;
+  public float scale;
 
   public List<Triangle> icosahedronTris;
   public List<List<Triangle>> subdividedTris;
@@ -20,11 +20,8 @@ public class PolySphere
   public float amplitude, lacunarity, persistence;
   public int octaves, multiplier;
 
-  public PolySphere()
-  {
-      
-  }
-  public PolySphere(Vector3 o, int s, int d)
+  public PolySphere(){}
+  public PolySphere(Vector3 o, float s, int d)
   {
     origin = o;
     scale = s;
@@ -196,7 +193,7 @@ public class PolySphere
 
     // === Scale with height function ===
     // @TODO: seed
-    ScaleSimplex(PolySphere.simplex, octaves, multiplier, amplitude, lacunarity, persistence);
+    //ScaleSimplex(PolySphere.simplex, octaves, multiplier, amplitude, lacunarity, persistence);
 
     //Set water depth using average of all scales 
     float sAverage = 0;
@@ -231,7 +228,28 @@ public class PolySphere
     hexes[0].neighbors = GetLeftHexagonInitialNeighborsAtSubdivion(subdivisions);
     hexes[hexes[0].neighbors[Direction.NegY]].neighbors = GetRightHexagonInitialNeighborsAtSubdivion(subdivisions);
 
+    // === Create initial ring of neighbors ===
+    /*
+    for (int i=1; i<6; i++)
+    {
+      DefineNeighborsFromNeighbors(hexes, i);
+    }
+
+    // === Define remaining neighbors ===
+    bool complete = false;
+    for (int i=3; i<1000 && complete==false; i++)
+    {
+      if (!NeighborsDefined(hexes, i))
+      {
+
+      }
+    }
+    if (!complete)
+      Debug.LogError("Failed to complete");
+
+    */
     // === Create three initial bands ===
+    /*
     int currentHex, lastHex, startingHex, currentWinner;
 
     // --- Traverse +Y ---
@@ -321,18 +339,36 @@ public class PolySphere
     {
       Debug.LogError("No end was found to directional band during neighbor +X traversal (Hit breaker limit).");
     }
-    
-    // === Define remaining neighbors ===
-    for (int i=1; i<hexes.Count;i++)
-    {
-      List<SphereTile> potentialNeighbors = sTiles[i].neighborDict.Values.ToList();
+    */
+  }
+
+  bool NeighborsDefined(List<Hexagon> hexes, int i)
+  {
+    if (i==-1)
+      return false;
+    else
+      return hexes[i].neighbors[Direction.Y] != -1 &&
+            hexes[i].neighbors[Direction.XY] != -1 &&
+            hexes[i].neighbors[Direction.X] != -1 &&
+            hexes[i].neighbors[Direction.NegY] != -1 &&
+            hexes[i].neighbors[Direction.NegXY] != -1 &&
+            hexes[i].neighbors[Direction.NegX] != -1;
+  }
+
+  bool DefineNeighborsFromDefined(List<Hexagon> hexes, int i)
+  {
+    List<SphereTile> potentialNeighbors = sTiles[i].neighborDict.Values.ToList();
+    return true;
+  }
+
+  void DefineNeighborsFromNeighbors(List<Hexagon> hexes, int i)
+  {
+    List<SphereTile> potentialNeighbors = sTiles[i].neighborDict.Values.ToList();
 
       // Check Y
       if (hexes[i].neighbors[Direction.Y] == -1)
       {
         Vector3 direction = GetNearbyDefinedNeighborVector(hexes, i, Direction.Y);
-        if (i==3)
-          Debug.Log(direction);
         int n = FindNeighbor(hexes[i].center, direction, potentialNeighbors);
         hexes[i].neighbors[Direction.Y] = n;
         if (hexes[n].neighbors[Direction.NegY] == -1)
@@ -388,8 +424,6 @@ public class PolySphere
         if (hexes[n].neighbors[Direction.X] == -1)
           hexes[n].neighbors[Direction.X] = i;
       }
-
-    }
   }
 
   Vector3 GetNearbyDefinedNeighborVector(List<Hexagon> hexes, int index, int direction)
@@ -461,12 +495,15 @@ public class PolySphere
     }
   }
   
-  List<Triangle> Icosahedron(int scale)
+  List<Triangle> Icosahedron(float scale)
   {
+    if (scale <= 0)
+      Debug.LogError("NO SCALE?!");
+      
     List<Triangle> output = new List<Triangle>();
     List<Vector3> vertices = new List<Vector3>();
 
-    float goldRat = 1.6f; //golden ratio (Unity calculated it as 1.6)
+    float goldRat = 1.6f; //golden ratio (Unity calculated it as 1.6)s
 
     //Icosahedron coords
     Vector3 origin = Vector3.zero,
@@ -482,6 +519,7 @@ public class PolySphere
             zy2 = new Vector3(0, 1, -goldRat) * scale,
             zy3 = new Vector3(0, -1, -goldRat) * scale,
             zy4 = new Vector3(0, -1, goldRat) * scale;
+
     //Debug.Log(xz4.magnitude);
     vertices.Add(origin);         // 0
     vertices.Add(origin + xy1);   // 1

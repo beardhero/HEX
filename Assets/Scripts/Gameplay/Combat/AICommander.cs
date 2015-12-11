@@ -4,13 +4,16 @@ using System.Collections.Generic;
 
 public class AICommander : Commander
 {
-  public Army army;
+  public AICommander(int id, Army a) : base(id, a){}
 
-  public AICommander(int id) : base(id){}
+  public override void DeployUnits()
+  {
+    army.units[0].Spawn(nexusLoc);
+  }
 
   public override void OnWaitingForCommands()
   {
-    List<Command> commands = new List<Command>();
-    commands.Add(new MoveCommand());
+    Queue<Command> commands = new Queue<Command>();
+    commands.Enqueue(new MoveCommand(army.units[0], Direction.X, 2, 2.5f));
   }
 }

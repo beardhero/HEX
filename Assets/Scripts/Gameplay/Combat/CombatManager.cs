@@ -1,31 +1,96 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
 public class CombatManager : MonoBehaviour
 {
-  public AICommander ai1, ai2;
+  public Army lightArmy, darkArmy;
+  public Commander player1, player2;
+  PlayerStatus[] playerStatus;
 
-  public void Initialize()
+  public static World activeWorld;
+  public static CombatManager instance;
+
+  public void Initialize(World w)
   {
-    ai1 = new AICommander(1);
-    ai2 = new AICommander(2);
+    instance = this;
+    activeWorld = w;
+
+    playerStatus = new PlayerStatus[2];
+    playerStatus[0] = new PlayerStatus(0);
+    playerStatus[1] = new PlayerStatus(1);
+
+    player1 = new AICommander(playerStatus[0].id, lightArmy);
+    player2 = new AICommander(playerStatus[1].id, darkArmy);
   }
 
   public void BeginDuel()
   {
-    ai1.OnWaitingForCommands();
-    ai1.OnWaitingForCommands();
+    player1.BeginCombat(0);
+    player2.BeginCombat(7);
+    NewRound();
   }
 
-  public void ProcessCommands(List<Command> cmds)
+  void NewRound()
   {
+    // Reset state
+    for (int i=0; i<playerStatus.Length; i++)
+      playerStatus[i].submittedCommands = false;
 
+    // Ask for input
+    player1.OnWaitingForCommands();
+    player2.OnWaitingForCommands();
   }
-}
 
-[System.Serializable]
-public class Army
-{
-  public List<Unit> units;
+  void ProcessRound()
+  {
+    int breaker = 0, cmdsRemaining=1;
+    while (cmdsRemaining != 0 && breaker <100)
+    {
+      breaker++;
+
+      for (int i=0;i<playerStatus.Length;i++)
+      {
+        if (playerStatus[i].pendingCommands.Count > 0)
+          ProcessCommand(playerStatus[i].pendingCommands.Dequeue());
+      }
+    }
+    
+  }
+
+  void ProcessCommand(Command c)
+  {
+    c.Execute();
+  }
+
+  // === Callbacks ===
+  public void ReceiveCommands(int id, Queue<Command> cmds)
+  {
+    playerStatus[id].pendingCommands = cmds;
+    playerStatus[id].submittedCommands = true;
+
+    // Check to see if all have submitted
+
+    bool all = true;
+    for (int i=0;i<playerStatus.Length;i++)
+    {
+      if (!playerStatus[i].submittedCommands)
+        all = false;
+    }
+    if (all)
+      ProcessRound();
+  }
+
+  class PlayerStatus
+  {
+    public int id;
+    public bool submittedCommands;
+
+    public Queue<Command> pendingCommands;
+
+    public PlayerStatus(int i)
+    {
+      id = i;
+    }
+  }
 }
