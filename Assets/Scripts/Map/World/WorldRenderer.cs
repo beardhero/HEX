@@ -16,7 +16,7 @@ public class WorldRenderer : MonoBehaviour
   {
     List<GameObject> output = new List<GameObject>();
 
-    for (int i=0; i<1; i++)
+    for (int i=0; i<8; i++)
     {
       //StartCoroutine(RecursiveRender(world, tileSet, controlx, controly, controlz, i));
       output.Add(RecursiveRender(world, tileSet, controlx, controly, controlz, i));
@@ -54,7 +54,7 @@ public class WorldRenderer : MonoBehaviour
     //Generate quadrant
     foreach (HexTile ht in world.tiles)
     { 
-      if (QuadrantActive(it))
+      if (ControlX(ht.hexagon.center.x) && ControlY(ht.hexagon.center.y) && ControlZ(ht.hexagon.center.z))
       {
         //Debug.Log("Building quadrant "+it);
 

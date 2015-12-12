@@ -7,7 +7,7 @@ public class PolySphere
 {
   public Vector3 origin;
   public int subdivisions;
-  public float scale;
+  public float scale = 1;
 
   public List<Triangle> icosahedronTris;
   public List<List<Triangle>> subdividedTris;
@@ -63,7 +63,7 @@ public class PolySphere
         Vector3 v1 = (tri.v1+tri.v2)/2.0f;
         Vector3 v2 = (tri.v2+tri.v3)/2.0f;
         Vector3 v3 = (tri.v3+tri.v1)/2.0f;
-
+        
         //Project onto sphere
         v1 *= (float)(1.902084 / v1.magnitude) * scale; //golden rectangle sphere radius 1.902084
         v2 *= (float)(1.902084 / v2.magnitude) * scale;
@@ -167,7 +167,7 @@ public class PolySphere
       st.index = count;
       count++;
 
-      st.scale *= scale;
+      //st.scale *= scale;
       st.Build();
     }
     
@@ -205,6 +205,7 @@ public class PolySphere
 
     // --- Number tris ---
     // Is this section still needed?
+    //Don't think so
     count = 0;
     foreach (Triangle t in nextTris)
     {
@@ -491,7 +492,7 @@ public class PolySphere
     foreach (SphereTile st in sTiles)
     {
       float height = Mathf.Abs(simplex.coherentNoise(st.center.x, st.center.y, st.center.z, octaves, multiplier, amplitude, lacunarity, persistence));
-      st.scale *= (1 + height*100);
+      st.scale *= (1 + height*10);
     }
   }
   
@@ -499,6 +500,8 @@ public class PolySphere
   {
     if (scale <= 0)
       Debug.LogError("NO SCALE?!");
+    if (scale > 50)
+      Debug.LogError("Why so big?");
       
     List<Triangle> output = new List<Triangle>();
     List<Vector3> vertices = new List<Vector3>();

@@ -56,18 +56,20 @@ public class GameManager : MonoBehaviour
 
     // Ideally, the only place state is manually set.
     state = beginningState;
-
+    bool loading;
     switch (state)
     {
       case GameState.WorldDuel:
-        InitializeWorld();
+        loading = false; //@TODO: still caching on duel
+        InitializeWorld(loading);
 
         InitializeCombat();
         combatManager.BeginDuel();
       break;
 
       case GameState.WorldMap:
-        InitializeWorld();
+        loading = true;
+        InitializeWorld(loading);
       break;
 
       case GameState.ZoneMap:
@@ -75,7 +77,8 @@ public class GameManager : MonoBehaviour
       break;
 
       case GameState.Caching:
-        InitializeWorld();
+        loading = false;
+        InitializeWorld(loading);
 
         worldCacher = worldManagerObj.GetComponent<CreateWorldCache>();
         worldCacher.BuildCache(worldManager.activeWorld);
@@ -87,11 +90,11 @@ public class GameManager : MonoBehaviour
     }
   }
 
-  void InitializeWorld()
+  void InitializeWorld(bool loading)
   {
     worldManagerObj = GameObject.FindWithTag("World Manager");
     worldManager = worldManagerObj.GetComponent<WorldManager>();
-    currentWorld = worldManager.Initialize();
+    currentWorld = worldManager.Initialize(loading);
   }
 
   void InitializeCombat()

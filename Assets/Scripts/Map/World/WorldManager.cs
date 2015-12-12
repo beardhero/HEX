@@ -10,7 +10,7 @@ public class WorldManager : MonoBehaviour
   [HideInInspector] public World activeWorld;
   public TileSet regularTileSet;
   public float maxMag = 10;
-  public float worldScale;
+  public float worldScale = 1;
   public int worldSubdivisions;
   public static SimplexNoise simplex;
 
@@ -28,23 +28,26 @@ public class WorldManager : MonoBehaviour
 
   public World Initialize(bool loadWorld = false)
   {
+    simplex = new SimplexNoise(GameManager.gameSeed);
+    octaves = Random.Range(1, 4);
+    multiplier = Random.Range(1, 10);
+    amplitude = Random.Range(0.1f, 0.9f);
+    lacunarity = Random.Range(1.0f, 2.0f);
+    persistence = Random.Range(0.8f, 1.8f);
+
     if (loadWorld)
+    {
       activeWorld = LoadWorld();
+      //Seed the world heights
+      SetHeights();
+    }
     else
     {
       activeWorld = new World();
       activeWorld.PrepForCache(worldScale, worldSubdivisions);
     }
 
-    activeWorld = LoadWorld();
-    //Seed the world heights
-    simplex = new SimplexNoise(GameManager.gameSeed);
-    octaves = Random.Range(10, 20);
-    multiplier = Random.Range(15, 25);
-    amplitude = Random.Range(5f, 10f);
-    lacunarity = Random.Range(1.0f, 2.0f);
-    persistence = Random.Range(0.1f, 0.9f);
-    SetHeights();
+    
     currentWorldObject = new GameObject("World");
     currentWorldTrans = currentWorldObject.transform;
 
@@ -60,8 +63,6 @@ public class WorldManager : MonoBehaviour
 
     labelDirections = true;
 
-    DrawHexIndices();
-
     return activeWorld;
     //DrawHexIndices();
   }
@@ -73,12 +74,12 @@ public class WorldManager : MonoBehaviour
 
   void SetHeights()
   {
-    float s = 2.0f;
+    float s = Random.Range(-99999,99999);
     foreach (HexTile ht in activeWorld.tiles)
     {
       //Debug.Log(Mathf.Abs(simplex.coherentNoise(ht.hexagon.center.x, ht.hexagon.center.y, ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, persistence)));
-      ht.hexagon.Scale = 10 + 0.5f * Mathf.Abs(simplex.coherentNoise(ht.hexagon.center.x, ht.hexagon.center.y, ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, persistence)
-                            + 0.5f * Mathf.Abs(simplex.coherentNoise(s*ht.hexagon.center.x, s*ht.hexagon.center.y, s*ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, persistence)));
+      ht.hexagon.Scale = worldScale + 0.7f * Mathf.Abs(simplex.coherentNoise(ht.hexagon.center.x+s, ht.hexagon.center.y+s, ht.hexagon.center.z+s, octaves, multiplier, amplitude, lacunarity, persistence)
+                            + 0.3f * Mathf.Abs(simplex.coherentNoise(s*ht.hexagon.center.x, s*ht.hexagon.center.y, s*ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, persistence)));
     }
   }
 

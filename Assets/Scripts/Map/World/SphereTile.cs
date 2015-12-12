@@ -85,7 +85,7 @@ public class SphereTile
     //Scale our vectors to be on the face plane
     foreach (Triangle t in subCopies)
     {
-      t.center = (t.center / t.center.magnitude) * s; //Could use t.center.Normalize() * s
+      t.center = (t.center.normalized * s); 
     }
 
     Triangle startingAt = subCopies[0];

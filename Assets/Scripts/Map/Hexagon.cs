@@ -38,7 +38,7 @@ public class Hexagon
     v4 = verts[3];
     v5 = verts[4];
     v6 = verts[5];
-    normal = (SerializableVector3)(((Vector3)(center - origin)).normalized);
+    normal = ((Vector3)(center - origin)).normalized;
     isPentagon = isPent;
   }
 }
