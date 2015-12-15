@@ -5,6 +5,9 @@ using System.Collections.Generic;
 public class WorldRenderer : MonoBehaviour
 {
   public GameObject worldPrefab;
+  public float texWidth;
+  public float texHeight;
+
   //Zone currentZone;
   bool controlx;
   bool controly;
@@ -37,10 +40,10 @@ public class WorldRenderer : MonoBehaviour
 
     SerializableVector3 origin = world.origin;
     Vector2 uv0 = Vector2.zero,
-          uv1 = new Vector2(.5f, 1),
-          uv2 = new Vector2(1, 0);
+          uv1 = new Vector2(.5f/texWidth, 1),
+          uv2 = new Vector2(1f/texWidth, 0);
 
-    Vector2 uvOffset = Vector3.zero;
+    //Vector2 uvOffset = Vector3.zero; //offset now done in hextile
 
     //LabelCenters(sphere.finalTris);
     //LabelNeighbors(sphere);
@@ -49,15 +52,17 @@ public class WorldRenderer : MonoBehaviour
     List<int> triangles = new List<int>();
     List<Vector3> normals = new List<Vector3>();
     List<Vector2> uvs = new List<Vector2>();
-
+    
 
     //Generate quadrant
     foreach (HexTile ht in world.tiles)
     { 
       if (ControlX(ht.hexagon.center.x) && ControlY(ht.hexagon.center.y) && ControlZ(ht.hexagon.center.z))
       {
-        //Debug.Log("Building quadrant "+it);
-
+        IntCoord uvCoord = tileSet.GetUVForType(ht.type);
+        Debug.Log(uvCoord.x + "type:"+ ht.type);
+        Vector2 uvOffset = new Vector2(uvCoord.x * texWidth, uvCoord.y * texHeight);
+        
         // Origin point
         int originIndex = vertices.Count;
         vertices.Add(origin);
@@ -74,7 +79,7 @@ public class WorldRenderer : MonoBehaviour
 
         vertices.Add(ht.hexagon.v1);
         normals.Add((origin + ht.hexagon.v1));
-        uvs.Add(uv0 + uvOffset);
+        uvs.Add(uv0 +uvOffset);
 
         vertices.Add(ht.hexagon.v2);
         normals.Add((origin + ht.hexagon.v2));

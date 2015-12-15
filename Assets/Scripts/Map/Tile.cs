@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using Random = UnityEngine.Random;
 
+[Serializable]
 public enum TileType {
   None,
   Sand, PinkSand, Mud, Dirt, Grass,
