@@ -81,8 +81,8 @@ public class WorldManager : MonoBehaviour
     foreach (HexTile ht in activeWorld.tiles)
     {
       //Debug.Log(Mathf.Abs(simplex.coherentNoise(ht.hexagon.center.x, ht.hexagon.center.y, ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, persistence)));
-      ht.hexagon.Scale = worldScale + (0.7f * Mathf.Abs(simplex.coherentNoise(ht.hexagon.center.x+s, ht.hexagon.center.y+s, ht.hexagon.center.z+s, octaves, multiplier, amplitude, lacunarity, persistence)
-                            + 0.03f * Mathf.Abs(simplex.coherentNoise(s*ht.hexagon.center.x, s*ht.hexagon.center.y, s*ht.hexagon.center.z, octaves, 1000*multiplier, 24*amplitude, lacunarity, persistence))))/2.0f;
+      ht.hexagon.Scale = worldScale + 0.7f * Mathf.Abs(simplex.coherentNoise(ht.hexagon.center.x+s, ht.hexagon.center.y+s, ht.hexagon.center.z+s, octaves, multiplier, amplitude, lacunarity, persistence)
+                            + 0.3f * Mathf.Abs(simplex.coherentNoise(s*ht.hexagon.center.x, s*ht.hexagon.center.y, s*ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, persistence)));
     }
   }
   void FloodFill()
