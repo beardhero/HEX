@@ -24,7 +24,7 @@ public class WorldRenderer : MonoBehaviour
       //StartCoroutine(RecursiveRender(world, tileSet, controlx, controly, controlz, i));
       output.Add(RecursiveRender(world, tileSet, controlx, controly, controlz, i));
       //Call our control function, which will iterate through the cyclic permutations to define 8 quadrants
-      //Cycle(controlx, controly, controlz);
+      Cycle(controlx, controly, controlz);
     }
     return output;
   }
@@ -60,7 +60,7 @@ public class WorldRenderer : MonoBehaviour
       if (ControlX(ht.hexagon.center.x) && ControlY(ht.hexagon.center.y) && ControlZ(ht.hexagon.center.z))
       {
         IntCoord uvCoord = tileSet.GetUVForType(ht.type);
-        Debug.Log(uvCoord.x + "type:"+ ht.type);
+        Debug.Log("xCoord: "+ uvCoord.x + "  type: "+ ht.type);
         Vector2 uvOffset = new Vector2(uvCoord.x * texWidth, uvCoord.y * texHeight);
         
         // Origin point
@@ -176,7 +176,7 @@ public class WorldRenderer : MonoBehaviour
     return output;
   }
 
-/*
+
   public void Cycle(bool x, bool y, bool z)
   {
     //8 quadrants
@@ -224,7 +224,7 @@ public class WorldRenderer : MonoBehaviour
       controlx = controly = controlz = false;
     }
   }
-  */
+  
 
   /*
   bool QuadrantActive(int iteration)
