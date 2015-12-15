@@ -21,7 +21,7 @@ public class WorldRenderer : MonoBehaviour
       //StartCoroutine(RecursiveRender(world, tileSet, controlx, controly, controlz, i));
       output.Add(RecursiveRender(world, tileSet, controlx, controly, controlz, i));
       //Call our control function, which will iterate through the cyclic permutations to define 8 quadrants
-      Cycle(controlx, controly, controlz);
+      //Cycle(controlx, controly, controlz);
     }
     return output;
   }
@@ -171,6 +171,7 @@ public class WorldRenderer : MonoBehaviour
     return output;
   }
 
+/*
   public void Cycle(bool x, bool y, bool z)
   {
     //8 quadrants
@@ -218,7 +219,9 @@ public class WorldRenderer : MonoBehaviour
       controlx = controly = controlz = false;
     }
   }
+  */
 
+  /*
   bool QuadrantActive(int iteration)
   {
     switch (iteration)
@@ -241,6 +244,7 @@ public class WorldRenderer : MonoBehaviour
         return controlx && controly && controlz;
     }
   }
+  */
 
   /*
   void LabelNeighbors(PolySphere sphere)

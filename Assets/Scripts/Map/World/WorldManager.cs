@@ -80,6 +80,7 @@ public class WorldManager : MonoBehaviour
       //Debug.Log(Mathf.Abs(simplex.coherentNoise(ht.hexagon.center.x, ht.hexagon.center.y, ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, persistence)));
       ht.hexagon.Scale = worldScale + 0.7f * Mathf.Abs(simplex.coherentNoise(ht.hexagon.center.x+s, ht.hexagon.center.y+s, ht.hexagon.center.z+s, octaves, multiplier, amplitude, lacunarity, persistence)
                             + 0.3f * Mathf.Abs(simplex.coherentNoise(s*ht.hexagon.center.x, s*ht.hexagon.center.y, s*ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, persistence)));
+
     }
   }
 

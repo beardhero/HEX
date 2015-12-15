@@ -98,7 +98,6 @@ public class PolySphere
       //Save our subdivided levels
       subdividedTris.Add(nextTris); 
     }
-
     
     //Create SphereTiles, give them neighbors
     
@@ -170,7 +169,8 @@ public class PolySphere
       //st.scale *= scale;
       st.Build();
     }
-    
+
+
     unitHexes = new List<Hexagon>();
     foreach (SphereTile st in sTiles)
     {
