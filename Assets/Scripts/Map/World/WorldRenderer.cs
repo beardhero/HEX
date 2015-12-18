@@ -5,9 +5,10 @@ using System.Collections.Generic;
 public class WorldRenderer : MonoBehaviour
 {
   public GameObject worldPrefab;
-  public float texWidth;
-  public float texHeight;
-
+  public float tileWidth;
+  public float tileHeight;
+  public int tileCountW;
+  public int tileCountH;
   //Zone currentZone;
   bool controlx;
   bool controly;
@@ -39,12 +40,15 @@ public class WorldRenderer : MonoBehaviour
     MeshCollider myCollider = output.GetComponent<MeshCollider>();
 
     SerializableVector3 origin = world.origin;
+    float uv2x = 1.0f / tileCountW;
+    float uv1x = uv2x / 2;
+    float uv1y = 1.0f / tileCountH;
     Vector2 uv0 = Vector2.zero,
-          uv1 = new Vector2(.5f/texWidth, 1),
-          uv2 = new Vector2(1f/texWidth, 0);
-
-    //Vector2 uvOffset = Vector3.zero; //offset now done in hextile
-
+            uv2 = new Vector2(uv2x, 0),
+            uv1 = new Vector2(uv1x, uv1y);
+    //Debug.Log(uv1);
+    //Debug.Log(uv2);
+    //Debug.Log(uv0);
     //LabelCenters(sphere.finalTris);
     //LabelNeighbors(sphere);
 
@@ -60,9 +64,9 @@ public class WorldRenderer : MonoBehaviour
       if (ControlX(ht.hexagon.center.x) && ControlY(ht.hexagon.center.y) && ControlZ(ht.hexagon.center.z))
       {
         IntCoord uvCoord = tileSet.GetUVForType(ht.type);
-        Debug.Log("xCoord: "+ uvCoord.x + "  type: "+ ht.type);
-        Vector2 uvOffset = new Vector2(uvCoord.x * texWidth, uvCoord.y * texHeight);
-        
+        //Debug.Log("xCoord: "+ uvCoord.x + "  type: "+ ht.type);
+        Vector2 uvOffset = new Vector2((uvCoord.x * uv2.x), (uvCoord.y * uv1.y));
+
         // Origin point
         int originIndex = vertices.Count;
         vertices.Add(origin);

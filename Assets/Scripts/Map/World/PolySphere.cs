@@ -170,7 +170,6 @@ public class PolySphere
       st.Build();
     }
 
-
     unitHexes = new List<Hexagon>();
     foreach (SphereTile st in sTiles)
     {
@@ -190,10 +189,6 @@ public class PolySphere
 
     // === Assign neighbors to unix hexes ===
     TraverseAndAssignNeighbors(unitHexes, sTiles);
-
-    // === Scale with height function ===
-    // @TODO: seed
-    //ScaleSimplex(PolySphere.simplex, octaves, multiplier, amplitude, lacunarity, persistence);
 
     //Set water depth using average of all scales 
     float sAverage = 0;
@@ -219,8 +214,6 @@ public class PolySphere
     {
       finalHexes.Add(st.ToHexagon());
     }
-
-    //finalTris = dualTris;
   }
 
   void TraverseAndAssignNeighbors(List<Hexagon> hexes, List<SphereTile> sTiles)

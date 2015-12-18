@@ -21,6 +21,7 @@ public class WorldManager : MonoBehaviour
   //@TODO: These are for creating the heights, and are properties which should be serialized when we go to persistence.
   private int octaves, multiplier;
   private float amplitude, lacunarity, persistence;
+  private float averageScale;
 
   // === Cache ===
   WorldRenderer worldRenderer;
@@ -31,17 +32,23 @@ public class WorldManager : MonoBehaviour
   public World Initialize(bool loadWorld = false)
   {
     simplex = new SimplexNoise(GameManager.gameSeed);
-    octaves = Random.Range(1, 1);
+    octaves = Random.Range(4, 4);
     multiplier = Random.Range(10, 10);
-    amplitude = Random.Range(0.9f, 0.9f);
-    lacunarity = Random.Range(1.0f, 1.0f);
-    persistence = Random.Range(10.5f, 10.5f);
+    amplitude = Random.Range(0.5f, 1.0f);
+    lacunarity = Random.Range(0.5f, 1.5f);
+    persistence = Random.Range(0.5f, 1.5f);
 
     if (loadWorld)
     {
       activeWorld = LoadWorld();
       //Seed the world heights
       SetHeights();
+      //Getting the average scale for setting water height etc.
+      foreach (HexTile ht in activeWorld.tiles)
+      {
+        averageScale += ht.hexagon.scale;
+      }
+      averageScale /= activeWorld.tiles.Count;
       FloodFill();
     }
     else
@@ -80,16 +87,38 @@ public class WorldManager : MonoBehaviour
     float s = Random.Range(-99999,99999);
     foreach (HexTile ht in activeWorld.tiles)
     {
-      //Debug.Log(Mathf.Abs(simplex.coherentNoise(ht.hexagon.center.x, ht.hexagon.center.y, ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, persistence)));
-      ht.hexagon.Scale = worldScale + 0.7f * Mathf.Abs(simplex.coherentNoise(ht.hexagon.center.x+s, ht.hexagon.center.y+s, ht.hexagon.center.z+s, octaves, multiplier, amplitude, lacunarity, persistence)
-                            + 0.3f * Mathf.Abs(simplex.coherentNoise(s*ht.hexagon.center.x, s*ht.hexagon.center.y, s*ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, persistence)));
+      ht.hexagon.Scale(1f + (int)(100 * (0.7f * Mathf.Abs(simplex.coherentNoise(ht.hexagon.center.x, ht.hexagon.center.y, ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, persistence)
+                            + 0.3f * Mathf.Abs(simplex.coherentNoise(s*ht.hexagon.center.x, s*ht.hexagon.center.y, s*ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, persistence)))))/100f);
+      //Debug.Log(1f + (int)(100 * (0.7f * Mathf.Abs(simplex.coherentNoise(ht.hexagon.center.x, ht.hexagon.center.y, ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, persistence)
+      //                      + 0.3f * Mathf.Abs(simplex.coherentNoise(s * ht.hexagon.center.x, s * ht.hexagon.center.y, s * ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, persistence)))))/100f);
     }
   }
+  //@TODO: Generalize this shit, it's just preliminary
   void FloodFill()
   {
     foreach (HexTile ht in activeWorld.tiles)
     {
-      ht.type = TileType.Abyss;
+      ht.type = TileType.Blue;
+    }
+    TileType typeToSet = TileType.Blue;
+    foreach (HexTile ht in activeWorld.tiles)
+    {
+      float rand = Random.Range(0, 1f);
+      if (rand <= 0.4f)
+        typeToSet = TileType.Gray;
+      if (rand > 0.4f)
+        typeToSet = TileType.Green;
+      if (ht.hexagon.scale >= averageScale)
+      {
+        ht.type = typeToSet;
+      }
+    }
+    foreach (HexTile ht in activeWorld.tiles)
+    {
+      if (ht.type == TileType.Blue)
+      {
+        ht.hexagon.Scale(averageScale / ht.hexagon.scale);
+      }
     }
   }
   

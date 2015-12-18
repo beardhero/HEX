@@ -7,24 +7,9 @@ public class Hexagon
   public int index;
   public SerializableVector3 center, normal, v1, v2, v3, v4, v5, v6;
   public int[] neighbors;
-  bool isPentagon;
+  public bool isPentagon;
   private float _scale;
-
-  public float Scale //This will multiply all vectors in the hexagon by the value, if you want to set the scale directly you must first normalize the hexagon
-  {
-    get { return _scale; }
-    set
-    {
-      _scale = value;
-      v1 *= _scale;
-      v2 *= _scale;
-      v3 *= _scale;
-      v4 *= _scale;
-      v5 *= _scale;
-      v6 *= _scale;
-      center *= _scale;
-    }
-  }
+  public float scale { get; set; }
 
   public Hexagon(){}
   public Hexagon(int i, Vector3 c, Vector3[] verts, SerializableVector3 origin, bool isPent = false)
@@ -40,5 +25,16 @@ public class Hexagon
     v6 = verts[5];
     normal = ((Vector3)(center - origin)).normalized;
     isPentagon = isPent;
+  }
+  public void Scale(float _scale) //This will multiply all vectors in the hexagon by the value, if you want to set the scale directly you must first normalize the hexagon
+  {
+    v1 *= _scale;
+    v2 *= _scale;
+    v3 *= _scale;
+    v4 *= _scale;
+    v5 *= _scale;
+    v6 *= _scale;
+    center = (v1 + v2 + v3 + v4 + v5 + v6) / 6f;
+    scale = center.magnitude;
   }
 }

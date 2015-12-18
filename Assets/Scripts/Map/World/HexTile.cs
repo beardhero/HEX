@@ -22,7 +22,6 @@ public class HexTile
   /*
   public void SetUVs()
   {
-  //@TODO: This really bad way to do this requires you to manually set the uvCoords of the texture you want from the worldprefab texture
     switch (type)
     {
       case HexTileType.None:

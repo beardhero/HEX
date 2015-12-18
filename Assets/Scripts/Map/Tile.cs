@@ -5,7 +5,7 @@ using Random = UnityEngine.Random;
 
 [Serializable]
 public enum TileType {
-  None,
+  None, Blue, Green, Gray,
   Sand, PinkSand, Mud, Dirt, Grass,
   Stone, SmoothStone, Road, MossyRoad,
   Snow, Water, DeepWater,
