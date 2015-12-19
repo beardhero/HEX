@@ -25,6 +25,41 @@ public class World
 
 
   [HideInInspector] public List<HexTile> tiles;
+  private bool neighborInit;
+  private List<List<HexTile>> _neighbors;
+  public List<List<HexTile>> neighbors{
+    get{
+      if (!neighborInit)
+      {
+        if (tiles.Count < 1)
+          Debug.LogError("Making neighbor list from null tiles");
+
+        neighborInit = true;
+        _neighbors = new List<List<HexTile>>();
+
+        foreach (HexTile t in tiles)
+        {
+          List<HexTile> neighbs = new List<HexTile>();
+
+          for (int i=0; i<t.hexagon.neighbors.Length; i++)
+          {
+            try
+            {
+              neighbs.Add(tiles[t.hexagon.neighbors[i]]);
+            }
+            catch (System.Exception e)
+            {
+              //Debug.LogError("tile "+t.index+"'s "+Direction.ToString(i)+" neighbor is bad: "+t.hexagon.neighbors[i]);
+            }
+          }
+          _neighbors.Add(neighbs);
+        }
+      }
+
+      return _neighbors;
+    }
+    set{}
+  }
 
   public World()
   {
@@ -40,6 +75,18 @@ public class World
     origin = Vector3.zero;
   }
 
+  public void PrepForCache(float scale, int subdivisions)
+  {
+    if (tiles == null || tiles.Count == 0)
+    {
+      neighborInit = false;
+      PolySphere sphere = new PolySphere(Vector3.zero, scale, subdivisions);
+      CacheHexes(sphere);
+    }
+    else
+      Debug.Log("tiles not null during cache prep");
+  }
+  
   public void CacheHexes(PolySphere s)  // Executed by the cacher
   {
     tiles = new List<HexTile>();
@@ -48,6 +95,7 @@ public class World
     {
       tiles.Add(new HexTile(h));
     }
+    neighborInit = false;
 
     Vector3 side1 = (Vector3)((tiles[0].hexagon.v1 + tiles[0].hexagon.v2) / 2.0f);
     Vector3 side2 = (tiles[0].hexagon.v4 + tiles[0].hexagon.v5) / 2.0f;
@@ -55,16 +103,5 @@ public class World
     radius = (tiles[0].hexagon.v1-origin).magnitude;
     circumference = Mathf.PI * radius * 2.0f;
     circumferenceInTiles = (int)Mathf.Ceil(circumference / dividingSide.magnitude);
-  }
-
-  public void PrepForCache(float scale, int subdivisions)
-  {
-    if (tiles == null || tiles.Count == 0)
-    {
-      PolySphere sphere = new PolySphere(Vector3.zero, scale, subdivisions);
-      CacheHexes(sphere);
-    }
-    else
-      Debug.Log("tiles not null during cache prep");
   }
 }

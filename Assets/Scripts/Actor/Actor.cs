@@ -8,9 +8,9 @@ public class Actor
   [HideInInspector] public GameObject instance;
   [HideInInspector] public Transform instanceTrans;   // Usually initialized in the ActorSpawner
 
-  public GameObject Spawn(Vector3 loc, Vector3 normal)
+  public GameObject Spawn(Vector3 loc, Vector3 facing, Vector3 normal)
   {
-    GameObject output = (GameObject)MonoBehaviour.Instantiate (prefab, loc+normal, Quaternion.LookRotation(normal));
+    GameObject output = (GameObject)MonoBehaviour.Instantiate (prefab, loc+normal, Quaternion.LookRotation(facing, normal));
     instance = output;
     instanceTrans = output.transform;
     

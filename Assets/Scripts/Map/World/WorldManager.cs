@@ -11,16 +11,16 @@ public class WorldManager : MonoBehaviour
   public TileSet regularTileSet;
   public float maxMag = 10;
   public float worldScale = 1;
-  public int worldSubdivisions;
+  public int worldSubdivisions =1;
   public static SimplexNoise simplex;
   public static int uvWidth = 100;
   public static int uvHeight;
 
   // === Private ===
   bool labelDirections;
-  //@TODO: These are for creating the heights, and are properties which should be serialized when we go to persistence.
+  //@TODO: These are for creating the heights, and are properties which should be serialized when we go to dAmplitude.
   private int octaves, multiplier;
-  private float amplitude, lacunarity, persistence;
+  private float amplitude, lacunarity, dAmplitude;
   private float averageScale;
 
   // === Cache ===
@@ -29,27 +29,24 @@ public class WorldManager : MonoBehaviour
   Transform currentWorldTrans;
   //int layermask; @TODO: stuff
 
+  void OnDrawGizmos()
+  {
+    DrawAxes();
+  }
+
   public World Initialize(bool loadWorld = false)
   {
     simplex = new SimplexNoise(GameManager.gameSeed);
     octaves = Random.Range(4, 4);
     multiplier = Random.Range(10, 10);
-    amplitude = Random.Range(0.5f, 1.0f);
-    lacunarity = Random.Range(0.5f, 1.5f);
-    persistence = Random.Range(0.5f, 1.5f);
+    amplitude = Random.Range(0.6f, 1f);
+    lacunarity = Random.Range(0.7f, .9f);
+    dAmplitude = Random.Range(0.5f, .1f);
+
 
     if (loadWorld)
     {
       activeWorld = LoadWorld();
-      //Seed the world heights
-      SetHeights();
-      //Getting the average scale for setting water height etc.
-      foreach (HexTile ht in activeWorld.tiles)
-      {
-        averageScale += ht.hexagon.scale;
-      }
-      averageScale /= activeWorld.tiles.Count;
-      FloodFill();
     }
     else
     {
@@ -57,6 +54,15 @@ public class WorldManager : MonoBehaviour
       activeWorld.PrepForCache(worldScale, worldSubdivisions);
     }
 
+    //Seed the world heights
+    SetHeights();
+    //Getting the average scale for setting water height etc.
+    foreach (HexTile ht in activeWorld.tiles)
+    {
+      averageScale += ht.hexagon.scale;
+    }
+    averageScale /= activeWorld.tiles.Count;
+    FloodFill();
     
     currentWorldObject = new GameObject("World");
     currentWorldTrans = currentWorldObject.transform;
@@ -73,8 +79,9 @@ public class WorldManager : MonoBehaviour
 
     labelDirections = true;
 
+    DrawHexIndices();
+
     return activeWorld;
-    //DrawHexIndices();
   }
 
   World LoadWorld()
@@ -87,10 +94,10 @@ public class WorldManager : MonoBehaviour
     float s = Random.Range(-99999,99999);
     foreach (HexTile ht in activeWorld.tiles)
     {
-      ht.hexagon.Scale(1f + (int)(100 * (0.7f * Mathf.Abs(simplex.coherentNoise(ht.hexagon.center.x, ht.hexagon.center.y, ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, persistence)
-                            + 0.3f * Mathf.Abs(simplex.coherentNoise(s*ht.hexagon.center.x, s*ht.hexagon.center.y, s*ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, persistence)))))/100f);
-      //Debug.Log(1f + (int)(100 * (0.7f * Mathf.Abs(simplex.coherentNoise(ht.hexagon.center.x, ht.hexagon.center.y, ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, persistence)
-      //                      + 0.3f * Mathf.Abs(simplex.coherentNoise(s * ht.hexagon.center.x, s * ht.hexagon.center.y, s * ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, persistence)))))/100f);
+      ht.hexagon.Scale(1f + (int)(100 * (0.7f * Mathf.Abs(simplex.coherentNoise(ht.hexagon.center.x, ht.hexagon.center.y, ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, dAmplitude)
+                            + 0.3f * Mathf.Abs(simplex.coherentNoise(s*ht.hexagon.center.x, s*ht.hexagon.center.y, s*ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, dAmplitude)))))/100f);
+      //Debug.Log(1f + (int)(100 * (0.7f * Mathf.Abs(simplex.coherentNoise(ht.hexagon.center.x, ht.hexagon.center.y, ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, dAmplitude)
+      //                      + 0.3f * Mathf.Abs(simplex.coherentNoise(s * ht.hexagon.center.x, s * ht.hexagon.center.y, s * ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, dAmplitude)))))/100f);
     }
   }
   //@TODO: Generalize this shit, it's just preliminary
@@ -121,12 +128,6 @@ public class WorldManager : MonoBehaviour
       }
     }
   }
-  
-
-  void OnDrawGizmos()
-  {
-    //DrawAxes();
-  }
 
   void DrawAxes()
   {
@@ -138,9 +139,10 @@ public class WorldManager : MonoBehaviour
     // === Draw axes on all tiles ===
     for (int i=0; i<activeWorld.tiles.Count; i++)
     {
-      DrawHexAxes(activeWorld.tiles, activeWorld.origin, i, .1f);
+      DrawHexAxes(activeWorld.tiles, activeWorld.origin, i);
     }
 
+    /*
     // === Draw Bands Only ===
     // Y-band
     for (int y=0; y<activeWorld.circumferenceInTiles; y++)
@@ -169,9 +171,10 @@ public class WorldManager : MonoBehaviour
         currentTileX = activeWorld.tiles[currentTileX].GetNeighborID(Direction.X);
       }
     }
+    */
   }
 
-  void DrawHexAxes(List<HexTile> tiles, Vector3 worldOrigin, int index, float scale = .3f, bool suppressWarnings = true)
+  void DrawHexAxes(List<HexTile> tiles, Vector3 worldOrigin, int index, float scale = .1f, bool suppressWarnings = true)
   {
     if (index == -1)
     {
@@ -190,38 +193,21 @@ public class WorldManager : MonoBehaviour
       return;
     }
 
-    // Y
-    int y = tiles[index].GetNeighborID(Direction.Y);
-    if (y != -1)
+    for (int dir = 0; dir<Direction.Count && dir<tiles[index].hexagon.neighbors.Length; dir++)
     {
-      Gizmos.color = Color.yellow;
-      SerializableVector3 direction = tiles[tiles[index].GetNeighborID(Direction.Y)].hexagon.center - tiles[index].hexagon.center;
-      Gizmos.DrawRay((Vector3)origin, (Vector3)direction*scale);
-    }
-    else if (!suppressWarnings)
-      Debug.LogError("Tile "+index+" has no neighbor set in the +Y direction!");
+      int y = tiles[index].GetNeighborID(dir);
+      if (y != -1)
+      {
+        Gizmos.color = Direction.ToColor(dir);
+        SerializableVector3 direction = tiles[tiles[index].GetNeighborID(dir)].hexagon.center - tiles[index].hexagon.center;
 
-    // XY
-    int xy = tiles[index].GetNeighborID(Direction.XY);
-    if (xy != -1)
-    {
-      Gizmos.color = Color.blue;
-      SerializableVector3 direction = tiles[tiles[index].GetNeighborID(Direction.XY)].hexagon.center - tiles[index].hexagon.center;
-      Gizmos.DrawRay((Vector3)origin, (Vector3)direction*scale);
-    }
-    else if (!suppressWarnings)
-      Debug.LogError("Tile "+index+" has no neighbor set in the +XY direction!");
+        float finalScale = scale;
+        if (dir == Direction.X || dir == Direction.Y || dir == Direction.NegXY)   // Prime directions
+          finalScale *= 2;
 
-    // X
-    int x = tiles[index].GetNeighborID(Direction.X);
-    if (x != -1)
-    {
-      Gizmos.color = Color.red;
-      Vector3 direction = tiles[tiles[index].GetNeighborID(Direction.X)].hexagon.center - tiles[index].hexagon.center + tiles[index].hexagon.normal * scale;
-      Gizmos.DrawRay((Vector3)origin, (Vector3)direction*scale);
+        Gizmos.DrawRay((Vector3)origin, (Vector3)direction*finalScale);
+      }
     }
-    else if (!suppressWarnings)
-      Debug.LogError("Tile "+index+" has no neighbor set in the +X direction!");
   }
 
   void DrawHexIndices()
