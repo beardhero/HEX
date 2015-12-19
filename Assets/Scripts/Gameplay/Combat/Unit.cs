@@ -17,7 +17,9 @@ public class Unit
 
     currentLocation = loc;
     HexTile tile = CombatManager.activeWorld.tiles[loc];
-    actor.Spawn(tile.hexagon.center, tile.hexagon.normal);
+
+    Vector3 facing = CombatManager.activeWorld.neighbors[tile.index][Direction.Y].hexagon.center - tile.hexagon.center;
+    actor.Spawn(tile.hexagon.center, facing, tile.hexagon.normal);
   }
 }
 
