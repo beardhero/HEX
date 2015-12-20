@@ -5,6 +5,8 @@ using System.Linq;
 
 public class PolySphere
 {
+  //Initial icosahedron coords
+  public static List<Vector3> icoCoords;
   public GameObject go; //Using this transform to rotate around centers of hexes
   public Vector3 origin;
   public int subdivisions;
@@ -35,7 +37,7 @@ public class PolySphere
     octaves = Random.Range(1, 10);
     multiplier = Random.Range(1, 24);
     simplex = new SimplexNoise(GameManager.gameSeed);
-     
+    icoCoords = new List<Vector3>();
     icosahedronTris = Icosahedron(scale);
  
     SubdivideAndDuals();
@@ -195,6 +197,11 @@ public class PolySphere
 
   void DamiensNeighbors(List<Hexagon> hexes)
   {
+    foreach (Hexagon h in hexes)
+    {
+      if (h.isPentagon)
+        Debug.Log(h.index);
+    }
     bool[] tilesDefined = new bool[hexes.Count];
 
     // === Set initial seed hex neighbors ===
@@ -225,15 +232,18 @@ public class PolySphere
     {
       //So we are working with each defined hexagon, hexes[i]
       //Walk to its neighbors one at a time and assign their neighbors
-      for (int w = 0; w < Direction.Count; w++)
-      {
-        if (hexes[hexes[i].neighbors[w]].neighbors[w] == -1) //don't assign neighbors to any hex which has any neighbors assigned
+      if (!hexes[i].isPentagon)
+      { 
+        for (int w = 0; w < hexes[i].neighbors.Length; w++)
         {
-          DefineNeighborsFromNeighbors(hexes, hexes[i].neighbors[w], hexes[i].index);
+          if(!tilesDefined[hexes[i].neighbors[w]])
+          {
+            DefineNeighborsFromNeighbors(hexes, hexes[i].neighbors[w], hexes[i].index);
+            tilesDefined[hexes[i].neighbors[w]] = true;
+          }
         }
       }
     }
-
     if (it > 0)
     {
       RecursiveAssign(hexes, tilesDefined);
@@ -333,6 +343,7 @@ public class PolySphere
 
   void DefineNeighborsFromNeighbors(List<Hexagon> hexes, int i, int knownDefined = -1)
   {
+    
     // Here we assume there are two adjacent tiles, i and knownDefined
     if (i==-1)
     {
@@ -344,7 +355,7 @@ public class PolySphere
     {
       knownDefined = i-1;
     }
-
+    
     List<SphereTile> potentialNeighbors;
 
     try
@@ -450,7 +461,7 @@ public class PolySphere
     List<Triangle> output = new List<Triangle>();
     List<Vector3> vertices = new List<Vector3>();
 
-    float goldRat = 1.6f; //golden ratio (Unity calculated it as 1.6)s
+    float goldRat = 1.618f; //golden ratio (Unity calculated it as 1.6)s
 
     //Icosahedron coords
     Vector3 origin = Vector3.zero,
@@ -466,6 +477,19 @@ public class PolySphere
             zy2 = new Vector3(0, 1, -goldRat) * scale,
             zy3 = new Vector3(0, -1, -goldRat) * scale,
             zy4 = new Vector3(0, -1, goldRat) * scale;
+    icoCoords.Add(xy1);
+    icoCoords.Add(xy2);
+    icoCoords.Add(xy3);
+    icoCoords.Add(xy4);
+    icoCoords.Add(xz1);
+    icoCoords.Add(xz2);
+    icoCoords.Add(xz3);
+    icoCoords.Add(xz4);
+    icoCoords.Add(zy1);
+    icoCoords.Add(zy2);
+    icoCoords.Add(zy3);
+    icoCoords.Add(zy4);
+
 
     //Debug.Log(xz4.magnitude);
     vertices.Add(origin);         // 0

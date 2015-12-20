@@ -12,7 +12,7 @@ public class Hexagon
   public float scale { get; set; }
 
   public Hexagon(){}
-  public Hexagon(int i, Vector3 c, Vector3[] verts, SerializableVector3 origin, bool isPent = false)
+  public Hexagon(int i, Vector3 c, Vector3[] verts, SerializableVector3 origin)
   {
     index = i;
     neighbors = new int[]{-1,-1,-1,-1,-1,-1};
@@ -24,7 +24,13 @@ public class Hexagon
     v5 = verts[4];
     v6 = verts[5];
     normal = ((Vector3)(center - origin)).normalized;
-    isPentagon = isPent;
+    foreach (Vector3 v in PolySphere.icoCoords)
+    {
+      if (Vector3.Angle(center, v) < 0.1f)
+      {
+        isPentagon = true;
+      }
+    }   
   }
   public void Scale(float _scale) //This will multiply all vectors in the hexagon by the value, if you want to set the scale directly you must first normalize the hexagon
   {

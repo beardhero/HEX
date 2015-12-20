@@ -133,33 +133,12 @@ public class SphereTile
 
   public Hexagon ToHexagon()
   {
-    bool pent = false;
-
     Vector3[] verts = new Vector3[1];
-    if (faceTris.Count > 5)
-    {
-      verts = new Vector3[]{faceTris[0].v2, faceTris[0].v3, faceTris[1].v3, faceTris[2].v3, faceTris[3].v3, faceTris[4].v3};
-    }
-    else
-    {
-      pent = true;
-      try 
-      {
-        verts = new Vector3[]{faceTris[0].v2, faceTris[0].v3, faceTris[1].v3, faceTris[2].v3, faceTris[3].v3};
-      }
-      catch (System.Exception e)
-      {
-        Debug.LogError("Hexagon "+index+" has "+this.faceTris.Count+" faceTris");
-      }
-    }
-    
-
+    verts = new Vector3[]{faceTris[0].v2, faceTris[0].v3, faceTris[1].v3, faceTris[2].v3, faceTris[3].v3, faceTris[4].v3};
+   
     Dictionary<Vector3, SphereTile> neighbs = new Dictionary<Vector3, SphereTile>();
-    
 
-    //Debug.Log(hexNeighbors.Count);
-
-    return new Hexagon(index, faceTris[0].v1, verts, origin, pent);
+    return new Hexagon(index, faceTris[0].v1, verts, origin);
   }
 }
 

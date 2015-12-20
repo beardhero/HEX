@@ -31,6 +31,7 @@ public class WorldManager : MonoBehaviour
 
   void OnDrawGizmos()
   {
+    Debug.Log("going here");
     DrawAxes();
   }
 
