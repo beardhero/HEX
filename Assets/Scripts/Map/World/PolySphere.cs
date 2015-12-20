@@ -5,6 +5,7 @@ using System.Linq;
 
 public class PolySphere
 {
+  public GameObject go; //Using this transform to rotate around centers of hexes
   public Vector3 origin;
   public int subdivisions;
   public float scale = 1;
@@ -187,10 +188,58 @@ public class PolySphere
       unitHexes.Add(st.ToHexagon());
     }
 
-    // === Assign neighbors to unix hexes ===
-    TraverseAndAssignNeighbors(unitHexes, sTiles);
+    // === Assign neighbors to unit hexes ===
+    //TraverseAndAssignNeighbors(unitHexes, sTiles);
+    DamiensNeighbors(unitHexes);
   }
 
+  void DamiensNeighbors(List<Hexagon> hexes)
+  {
+    bool[] tilesDefined = new bool[hexes.Count];
+
+    // === Set initial seed hex neighbors ===
+    hexes[0].neighbors = GetLeftHexagonInitialNeighborsAtSubdivion(subdivisions);
+    tilesDefined[0] = true;
+    //Now that we have a single hexagon defined, we can define the rest on the sphere based on it
+    RecursiveAssign(hexes, tilesDefined);  //This goes into the list of hexes as many times as it takes to assign directions to all hexes
+  }
+
+  void RecursiveAssign(List<Hexagon> hexes, bool[] tilesDefined)
+  {
+    int it = 0;
+    List<int> definedIndices = new List<int>();
+    //Figure out the indices of tiles which are already defined, increment "it" if we find any that aren't defined so we go back into the function
+    for (int i = 0; i < tilesDefined.Length; i++)
+    {
+      if (tilesDefined[i])
+      {
+        definedIndices.Add(i);
+      }
+      else
+      {
+        it++;
+      }
+    }
+    //For each tile that has been defined, define its neighbors (if they aren't already defined)
+    foreach (int i in definedIndices)
+    {
+      //So we are working with each defined hexagon, hexes[i]
+      //Walk to its neighbors one at a time and assign their neighbors
+      for (int w = 0; w < Direction.Count; w++)
+      {
+        if (hexes[hexes[i].neighbors[w]].neighbors[w] == -1) //don't assign neighbors to any hex which has any neighbors assigned
+        {
+          DefineNeighborsFromNeighbors(hexes, hexes[i].neighbors[w], hexes[i].index);
+        }
+      }
+    }
+
+    if (it > 0)
+    {
+      RecursiveAssign(hexes, tilesDefined);
+    }
+  }
+  //Using DamiensNeighbors instead
   void TraverseAndAssignNeighbors(List<Hexagon> hexes, List<SphereTile> sTiles)
   { 
     bool[] tilesDefined = new bool[hexes.Count];
