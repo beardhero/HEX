@@ -10,15 +10,17 @@ public class PolySphere
   public GameObject go; //Using this transform to rotate around centers of hexes
   public Vector3 origin;
   public int subdivisions;
+  public static int maxPlates = 12; //max number of tectonic plates
+  public static int minPlates = 3;
   public float scale = 1;
 
   public List<Triangle> icosahedronTris;
   public List<List<Triangle>> subdividedTris;
   public List<Triangle> finalTris;    // The finest level of subdivided tris
-  public List<Hexagon> unitHexes;
+  public List<HexTile> unitHexes;
   public List<SphereTile> sTiles;
- 
-  //For simplex
+  public List<List<SphereTile>> plates;
+  public int numberOfPlates;
   public static SimplexNoise simplex;
   public float amplitude, lacunarity, dAmplitude;
   public int octaves, multiplier;
@@ -41,9 +43,7 @@ public class PolySphere
     icosahedronTris = Icosahedron(scale);
  
     SubdivideAndDuals();
-
   }
-
 
   void SubdivideAndDuals()
   {
@@ -95,9 +95,8 @@ public class PolySphere
         tri.childTop.AssignNeighbors(tri.NeighborOne(tri.childTop), tri.childMid, tri.NeighborTwo(tri.childTop));
         tri.childRight.AssignNeighbors(tri.NeighborOne(tri.childRight), tri.NeighborTwo(tri.childRight), tri.childMid);
         tri.childLeft.AssignNeighbors(tri.childMid, tri.NeighborOne(tri.childLeft), tri.NeighborTwo(tri.childLeft));
+      }    
 
-      }
-      
       //Save our subdivided levels
       subdividedTris.Add(nextTris); 
     }
@@ -173,7 +172,7 @@ public class PolySphere
       st.Build();
     }
 
-    unitHexes = new List<Hexagon>();
+    unitHexes = new List<HexTile>();
     foreach (SphereTile st in sTiles)
     {
       // Cache neighbors in list
@@ -184,19 +183,81 @@ public class PolySphere
       }
     }
 
+    TectonicPlates(); //Gives SphereTiles a plate index
+
     // === Cache unit hexagons ===
     foreach (SphereTile st in sTiles)
     {
-      unitHexes.Add(st.ToHexagon());
+      unitHexes.Add(st.ToHexTile()); //plate index passed along to hextiles
     }
-
     // === Assign neighbors to unit hexes ===
     //TraverseAndAssignNeighbors(unitHexes, sTiles);
-    DamiensNeighbors(unitHexes);
+    //RecursiveNeighbors(unitHexes);
   }
 
-  void DamiensNeighbors(List<Hexagon> hexes)
+  void TectonicPlates()
   {
+    plates = new List<List<SphereTile>>();
+    //Start at some random points across the sphere
+    int i = 0; //increments through plates
+    //each tile will have a chance to be assigned its own plate
+    while (plates.Count < minPlates)
+    {
+      foreach (SphereTile st in sTiles)
+      {
+        float rand = Random.Range(0, 1f);
+        if (rand > 0.99f && plates.Count < maxPlates)
+        {
+          plates.Add(new List<SphereTile>());
+          plates[i].Add(st);
+          i++;
+        }
+      } 
+    }
+    //Fill in neighbors, fill in neighbors of neighbors, repeat until filled
+    FloodFill();
+    //Debug.Log(plates.Count);
+  }
+
+  void FloodFill() //Recursive
+  {
+    int i = 0;
+    bool go = false;
+    List<SphereTile> toAssign = new List<SphereTile>();
+    while (i < plates.Count)
+    {
+      foreach (SphereTile st in plates[i])
+      {
+        foreach (SphereTile nst in st.neighborList)
+        {
+          if (nst.plate == -1)
+          {
+            toAssign.Add(nst);
+            nst.plate = i;
+          }
+        }
+      }
+      foreach (SphereTile s in toAssign)
+      {
+        plates[i].Add(s);
+      }
+      i++;
+    }
+
+    foreach (SphereTile s in sTiles)
+    {
+      if (s.plate == -1)
+      {
+        go = true;
+      }
+    }
+
+    if (go) { FloodFill(); }
+  }
+
+  void RecursiveNeighbors(List<Hexagon> hexes)
+  {
+    //Logs the 12 pentagon indices
     foreach (Hexagon h in hexes)
     {
       if (h.isPentagon)
@@ -249,7 +310,7 @@ public class PolySphere
       RecursiveAssign(hexes, tilesDefined);
     }
   }
-  //Using DamiensNeighbors instead
+  //Using RecursiveNeighbors instead
   void TraverseAndAssignNeighbors(List<Hexagon> hexes, List<SphereTile> sTiles)
   { 
     bool[] tilesDefined = new bool[hexes.Count];
@@ -441,16 +502,6 @@ public class PolySphere
     return potentialNeighbors[winningNeighborIndex].index;
   }
 
-
-  // public void ScaleSimplex(SimplexNoise simplex, int octaves, int multiplier, float dAmp, float lacunarity, float dAmp)
-  // {
-  //   foreach (SphereTile st in sTiles)
-  //   {
-  //     float height = Mathf.Abs(simplex.coherentNoise(st.center.x, st.center.y, st.center.z, octaves, multiplier, amplitude, lacunarity, dAmp));
-  //     st.scale *= (1 + height*10);
-  //   }
-  // }
-  
   List<Triangle> Icosahedron(float scale)
   {
     if (scale <= 0)
@@ -513,11 +564,11 @@ public class PolySphere
     output.Add(new Triangle(vertices[1], vertices[9], vertices[5]));    // 3
     output.Add(new Triangle(vertices[1], vertices[5], vertices[6]));    // 4
     
-    output.Add(new Triangle(vertices[3], vertices[7], vertices[11]));   // 7
+    output.Add(new Triangle(vertices[3], vertices[7], vertices[11]));   // 5
     output.Add(new Triangle(vertices[3], vertices[11], vertices[2]));   // 6
-    output.Add(new Triangle(vertices[3], vertices[2], vertices[12]));   // 5
-    output.Add(new Triangle(vertices[3], vertices[12], vertices[8]));   // 9
-    output.Add(new Triangle(vertices[3], vertices[8], vertices[7]));    // 8
+    output.Add(new Triangle(vertices[3], vertices[2], vertices[12]));   // 7
+    output.Add(new Triangle(vertices[3], vertices[12], vertices[8]));   // 8
+    output.Add(new Triangle(vertices[3], vertices[8], vertices[7]));    // 9
 
     output.Add(new Triangle(vertices[10], vertices[7], vertices[4]));   // 10
     output.Add(new Triangle(vertices[4], vertices[7], vertices[8]));    // 11

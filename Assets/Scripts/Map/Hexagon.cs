@@ -40,7 +40,7 @@ public class Hexagon
     v4 *= _scale;
     v5 *= _scale;
     v6 *= _scale;
-    center = (v1 + v2 + v3 + v4 + v5 + v6) / 6f;
+    center *= _scale; //(v1 + v2 + v3 + v4 + v5 + v6) / 6f;
     scale = center.magnitude;
   }
 }

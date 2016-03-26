@@ -7,9 +7,32 @@ using System.Collections.Generic;
 public class HexTile
 {
   public int index;
+  public int plate = -1;
   string terrainType;
   public Hexagon hexagon;
   public TileType type;
+  
+  //Properties
+  private float _elevation;
+  public float elevation
+  {
+    get { return _elevation; }
+    set { _elevation = value; }
+  }
+  private float _heat;
+
+  public float heat
+  {
+    get { return _heat; }
+    set { _heat = value; }
+  }
+  private float _precipitation;
+
+  public float precipitation
+  {
+    get { return _precipitation; }
+    set { _precipitation = value; }
+  }
 
   public HexTile() { }
 
@@ -18,51 +41,18 @@ public class HexTile
     index = h.index;
     hexagon = h;
   }
-
-  /*
-  public void SetUVs()
+  public HexTile(Hexagon h, int p)
   {
-    switch (type)
-    {
-      case HexTileType.None:
-        uvOffset = Vector2.zero;
-        break;
-      case HexTileType.Sand:
-        uvOffset = new Vector2(0 * WorldManager.uvWidth, 0);
-        break;
-      case HexTileType.PinkSand:
-        uvOffset = new Vector2(1 * WorldManager.uvWidth, 0);
-        break;
-      case HexTileType.Mud:
-        uvOffset = new Vector2(2 * WorldManager.uvWidth, 0);
-        break;
-      case HexTileType.Dirt:
-        uvOffset = new Vector2(3 * WorldManager.uvWidth, 0);
-        break;
-      case HexTileType.Stone:
-        uvOffset = new Vector2(4 * WorldManager.uvWidth, 0);
-        break;
-      case HexTileType.Grass:
-        break;
-      case HexTileType.SmoothStone:
-        break;
-      case HexTileType.Road:
-        break;
-      case HexTileType.MossyRoad:
-        break;
-      case HexTileType.Snow:
-        break;
-      case HexTileType.Water:
-        break;
-      case HexTileType.DeepWater:
-        break;
-      case HexTileType.Abyss:
-        break;
-      default:
-        break;
-    }
+    index = h.index;
+    hexagon = h;
+    plate = p;
   }
-  */
+  public void ChangeType(TileType t)
+  {
+    type = t;
+    //@TODO: other stuff
+  }
+
   public int GetNeighborID(int dir)
   {
     return hexagon.neighbors[dir];

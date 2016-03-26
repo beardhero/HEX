@@ -11,17 +11,32 @@ public class WorldManager : MonoBehaviour
   public TileSet regularTileSet;
   public float maxMag = 10;
   public float worldScale = 1;
-  public int worldSubdivisions =1;
+  public int worldSubdivisions = 1;
   public static SimplexNoise simplex;
   public static int uvWidth = 100;
   public static int uvHeight;
 
   // === Private ===
   bool labelDirections;
-  //@TODO: These are for creating the heights, and are properties which should be serialized when we go to dAmplitude.
+  //@TODO: These are for creating the heights, and are properties which should be serialized when we go to persistent galaxy.
   private int octaves, multiplier;
   private float amplitude, lacunarity, dAmplitude;
-  private float averageScale;
+
+  // === Properties ===
+  private float _averageScale;
+  public float averageScale
+  {
+    get {
+      _averageScale = 0;
+      foreach (HexTile ht in activeWorld.tiles)
+      {
+        _averageScale += ht.hexagon.scale;
+      }
+      _averageScale /= activeWorld.tiles.Count;
+      return _averageScale; }
+    set { _averageScale = value; }
+  }
+
 
   // === Cache ===
   WorldRenderer worldRenderer;
@@ -31,7 +46,7 @@ public class WorldManager : MonoBehaviour
 
   void OnDrawGizmos()
   {
-    Debug.Log("going here");
+    //Debug.Log("going here");
     DrawAxes();
   }
 
@@ -54,16 +69,11 @@ public class WorldManager : MonoBehaviour
       activeWorld = new World();
       activeWorld.PrepForCache(worldScale, worldSubdivisions);
     }
-
+    
     //Seed the world heights
     SetHeights();
-    //Getting the average scale for setting water height etc.
-    foreach (HexTile ht in activeWorld.tiles)
-    {
-      averageScale += ht.hexagon.scale;
-    }
-    averageScale /= activeWorld.tiles.Count;
-    FloodFill();
+    
+    CreateOcean();
     
     currentWorldObject = new GameObject("World");
     currentWorldTrans = currentWorldObject.transform;
@@ -71,7 +81,8 @@ public class WorldManager : MonoBehaviour
     //currentWorld = new World(WorldSize.Small, WorldType.Verdant, Season.Spring, AxisTilt.Slight);
 
     worldRenderer = GetComponent<WorldRenderer>();
-    foreach (GameObject g in worldRenderer.RenderWorld(activeWorld, regularTileSet))
+    //changed this to run RenderPlates instead of RenderWorld
+    foreach (GameObject g in worldRenderer.RenderPlates(activeWorld, regularTileSet))
     {
       g.transform.parent =currentWorldTrans;
     }
@@ -80,7 +91,7 @@ public class WorldManager : MonoBehaviour
 
     labelDirections = true;
 
-    DrawHexIndices();
+    //DrawHexIndices();
 
     return activeWorld;
   }
@@ -101,8 +112,9 @@ public class WorldManager : MonoBehaviour
       //                      + 0.3f * Mathf.Abs(simplex.coherentNoise(s * ht.hexagon.center.x, s * ht.hexagon.center.y, s * ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, dAmplitude)))))/100f);
     }
   }
-  //@TODO: Generalize this shit, it's just preliminary
-  void FloodFill()
+  //@TODO: This is preliminary, it sets the ocean tiles using average scale 
+  //by making any tile 20% of the average or below blue, then scaling the blue tiles up to the average.
+  void CreateOcean()
   {
     foreach (HexTile ht in activeWorld.tiles)
     {
@@ -112,6 +124,7 @@ public class WorldManager : MonoBehaviour
     foreach (HexTile ht in activeWorld.tiles)
     {
       float rand = Random.Range(0, 1f);
+      //@TODO: this is just a preliminary variation of the land types
       if (rand <= 0.4f)
         typeToSet = TileType.Gray;
       if (rand > 0.4f)
@@ -129,13 +142,21 @@ public class WorldManager : MonoBehaviour
       }
     }
   }
-
+  //So now with the land masses, we're going to make the types more coherent like we did in Zone -> SpreadGround and RefineGround
+  void RefineTypes()
+  {
+    foreach (HexTile ht in activeWorld.tiles)
+    {
+      int i = 0;
+      //foreach (HexTile h in ht.ne) ;
+    }
+  }
   void DrawAxes()
   {
     if (!labelDirections || activeWorld.tiles.Count == 0)
       return;
 
-    int currentTileX = 13, currentTileY = 0, currentTileXY = 0;
+    //int currentTileX = 13, currentTileY = 0, currentTileXY = 0;  
 
     // === Draw axes on all tiles ===
     for (int i=0; i<activeWorld.tiles.Count; i++)

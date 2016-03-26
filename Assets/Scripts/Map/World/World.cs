@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 public enum WorldSize {None, Small, Medium, Large};
-public enum WorldType {None, Verdant, Icy, Ocean, Barren, Volcanic, Radioactive, Gaseous};
+public enum WorldType {None, Verdant, Frigid, Oceanic, Barren, Volcanic, Radiant, Gaseous};
 public enum Season {None, Spring, Summer, Fall, Winter};
 public enum AxisTilt { None, Slight, Moderate, Severe };      // Affects intensity of difficulty scaling during seasons
 
@@ -22,9 +22,12 @@ public class World
   public SerializableVector3 origin;
   public int circumferenceInTiles;
   public float circumference, radius;
-
+  public static int numberOfPlates; //Set by polysphere on cache
 
   [HideInInspector] public List<HexTile> tiles;
+  [HideInInspector] public List<HexTile> pentagons;
+  [HideInInspector] public List<Plate> plates;
+
   private bool neighborInit;
   private List<List<HexTile>> _neighbors;
   public List<List<HexTile>> neighbors{
@@ -87,15 +90,28 @@ public class World
       Debug.Log("tiles not null during cache prep");
   }
   
-  public void CacheHexes(PolySphere s)  // Executed by the cacher
+  public void CacheHexes(PolySphere s)  // Executed by the cacher.  @CHANGE: I'm now directly converting spheretiles to hextiles
   {
-    tiles = new List<HexTile>();
-
+    
+    tiles = new List<HexTile>(s.unitHexes);
+    neighborInit = false;
+    /*
     foreach (Hexagon h in s.unitHexes)
     {
       tiles.Add(new HexTile(h));
     }
-    neighborInit = false;
+    /*
+    //plates = new List<List<HexTile>>();
+    for (int i = 0; i <= numberOfPlates; i++)
+    {
+      plates.Add(new List<HexTile>());
+    }
+    Debug.Log("# " + numberOfPlates);
+    foreach (HexTile ht in tiles)
+    {
+      Debug.Log(ht.plate);
+      plates[ht.plate].Add(ht);
+    }
 
     Vector3 side1 = (Vector3)((tiles[0].hexagon.v1 + tiles[0].hexagon.v2) / 2.0f);
     Vector3 side2 = (tiles[0].hexagon.v4 + tiles[0].hexagon.v5) / 2.0f;
@@ -103,5 +119,6 @@ public class World
     radius = (tiles[0].hexagon.v1-origin).magnitude;
     circumference = Mathf.PI * radius * 2.0f;
     circumferenceInTiles = (int)Mathf.Ceil(circumference / dividingSide.magnitude);
+    */
   }
 }

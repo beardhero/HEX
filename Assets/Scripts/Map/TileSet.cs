@@ -7,11 +7,13 @@ public class TileSet
 {
   public Texture2D texture;
   public int tileWidth;
+  public int tileHeight;
   public TypeMap[] typeUVs;
 
   bool initialized = false;
 
   TypeMap[] _typeUVs;
+  
 
   void Initialize()
   {

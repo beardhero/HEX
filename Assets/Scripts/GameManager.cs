@@ -50,9 +50,9 @@ public class GameManager : MonoBehaviour
     if (Camera.main)
       zoneCameraControls = Camera.main.GetComponent<ZoneViewCamera>();
 
-      // @TODO: Make these a singleton pattern
-        currentZone = new Zone(128); // Required so Hex doesn't null ref currentZone
-        Hex.Initialize();
+    // @TODO: Make these a singleton pattern
+    currentZone = new Zone(1); // Required so Hex doesn't null ref currentZone
+    Hex.Initialize();
 
     // Ideally, the only place state is manually set.
     state = beginningState;

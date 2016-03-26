@@ -9,9 +9,9 @@ public class SphereTile
 {
   public int index;    // The index of the tile in our map. Translates into HexTile.id [set by PolySphere]
   public int[] neighbors;   // Indexes of the surrounding sphere tiles in our map [set by PolySphere] in array form for serialization
+  public int plate = -1; //Polysphere
   public Dictionary<int, SphereTile> neighborDict;    // A list of unique neighbors
   public List<SphereTile> neighborList;   // This is the first raw list, which will contain duplicates
-
   public bool colliding; //OnCollisionStay
   public TileType type;
   //The inital triangles from the subdivided polysphere which we will use to build the spheretile
@@ -131,14 +131,14 @@ public class SphereTile
     colliding = true;
   }
 
-  public Hexagon ToHexagon()
+  public HexTile ToHexTile()
   {
     Vector3[] verts = new Vector3[1];
     verts = new Vector3[]{faceTris[0].v2, faceTris[0].v3, faceTris[1].v3, faceTris[2].v3, faceTris[3].v3, faceTris[4].v3};
-   
+    Hexagon hex = new Hexagon(index, faceTris[0].v1, verts, origin);
     Dictionary<Vector3, SphereTile> neighbs = new Dictionary<Vector3, SphereTile>();
 
-    return new Hexagon(index, faceTris[0].v1, verts, origin);
+    return new HexTile(hex, plate);
   }
 }
 
