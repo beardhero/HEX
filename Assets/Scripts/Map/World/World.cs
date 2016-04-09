@@ -27,6 +27,7 @@ public class World
   [HideInInspector] public List<HexTile> tiles;
   [HideInInspector] public List<HexTile> pentagons;
   [HideInInspector] public List<Plate> plates;
+  [HideInInspector] public Dictionary<int, int> tileToPlate; //key hextile.index, value plate index
 
   private bool neighborInit;
   private List<List<HexTile>> _neighbors;
@@ -84,6 +85,8 @@ public class World
     {
       neighborInit = false;
       PolySphere sphere = new PolySphere(Vector3.zero, scale, subdivisions);
+      //make the tileToPlate dict
+      tileToPlate = new Dictionary<int, int>();
       CacheHexes(sphere);
     }
     else

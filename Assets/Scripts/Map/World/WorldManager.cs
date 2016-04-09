@@ -142,12 +142,12 @@ public class WorldManager : MonoBehaviour
       }
     }
   }
-  //So now with the land masses, we're going to make the types more coherent like we did in Zone -> SpreadGround and RefineGround
+  //So now with the land masses, we're going to make the "biomes" more coherent like we did in Zone -> SpreadGround and RefineGround
   void RefineTypes()
   {
     foreach (HexTile ht in activeWorld.tiles)
     {
-      int i = 0;
+      //int i = 0;
       //foreach (HexTile h in ht.ne) ;
     }
   }

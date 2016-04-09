@@ -18,10 +18,10 @@ public class MoveCommand : Command
     distance = dist;
     duration = dur;
   }
-
+ 
   public override void Execute()
   {
-    HexTile t = CombatManager.activeWorld.tiles[unit.currentLocation].GetNeighbor(CombatManager.activeWorld.tiles,direction);
+    HexTile t = CombatManager.activeWorld.tiles[unit.currentLocation]. GetNeighbor(CombatManager.activeWorld.tiles,direction);
     for (int i=1; i<distance; i++)
     {
       t = CombatManager.activeWorld.tiles[unit.currentLocation].GetNeighbor(CombatManager.activeWorld.tiles,direction);

@@ -11,6 +11,8 @@ public class HexTile
   string terrainType;
   public Hexagon hexagon;
   public TileType type;
+  public List<int> neighbors;
+  public bool boundary;
   
   //Properties
   private float _elevation;
@@ -41,11 +43,12 @@ public class HexTile
     index = h.index;
     hexagon = h;
   }
-  public HexTile(Hexagon h, int p)
+  public HexTile(Hexagon h, int p, List<int> neighbs)
   {
     index = h.index;
     hexagon = h;
     plate = p;
+    neighbors = new List<int>(neighbs);
   }
   public void ChangeType(TileType t)
   {

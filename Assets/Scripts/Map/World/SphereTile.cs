@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Linq;
 using System.Collections.Generic;
 using LibNoise.Unity;
 using LibNoise.Unity.Generator;
@@ -97,7 +98,7 @@ public class SphereTile
     List<float> subs = new List<float>();
 
 
-    for (int z=0;z < 6;z++) //Make our 12 triangles (the pentagons apparently work) @TODO: optimize, scew
+    for (int z=0;z < 6;z++) //Make our 12 triangles (the pentagons apparently work) 
     {
       //Rotate our tester to where we want it, check for subTriangle here
       triCopyTrans.RotateAround(center, center, 60);
@@ -136,9 +137,14 @@ public class SphereTile
     Vector3[] verts = new Vector3[1];
     verts = new Vector3[]{faceTris[0].v2, faceTris[0].v3, faceTris[1].v3, faceTris[2].v3, faceTris[3].v3, faceTris[4].v3};
     Hexagon hex = new Hexagon(index, faceTris[0].v1, verts, origin);
-    Dictionary<Vector3, SphereTile> neighbs = new Dictionary<Vector3, SphereTile>();
-
-    return new HexTile(hex, plate);
+    //Dictionary<Vector3, SphereTile> neighbs = new Dictionary<Vector3, SphereTile>();
+    //convert neighbors to index list
+    List<int> neig = new List<int>();
+    foreach (SphereTile st in neighborDict.Values.ToList())
+    {
+      neig.Add(st.index);
+    }
+    return new HexTile(hex, (int)this.plate, neig);
   }
 }
 

@@ -10,7 +10,7 @@ public class WorldRenderer : MonoBehaviour
   public int tileCountW;
   public int tileCountH;
   public bool hexagonal; // false for triangle uvs, true for hexagonal
-  public List<List<HexTile>> hPlates;
+  public List<List<SphereTile>> hPlates;
   bool controlx;
   bool controly;
   bool controlz;
