@@ -19,7 +19,8 @@ public class PolySphere
   public List<Triangle> finalTris;    // The finest level of subdivided tris
   public List<HexTile> unitHexes;
   public List<SphereTile> sTiles;
-  public List<List<SphereTile>> plates;
+  public List<List<SphereTile>> tPlates;
+  public List<Plate> plates;
   public int numberOfPlates;
   public static SimplexNoise simplex;
   public float amplitude, lacunarity, dAmplitude;
@@ -42,9 +43,31 @@ public class PolySphere
     icoCoords = new List<Vector3>();
     icosahedronTris = Icosahedron(scale);
  
-    SubdivideAndDuals();
+    SubdivideAndDuals(); //Builds SphereTiles
+    TectonicPlates(); //Populates plates and creates stress forces between them.
+    CacheHexes(); //Converts to HexTiles for serialization
   }
-
+  void CacheHexes()
+  {
+    unitHexes = new List<HexTile>();
+    foreach (SphereTile st in sTiles)
+    {
+      // Cache neighbors in list
+      foreach (SphereTile t in st.neighborList)
+      {
+        if (!st.neighborDict.ContainsKey(t.index))
+          st.neighborDict.Add(t.index, t);
+      }
+    }
+    // === Cache unit hexagons ===
+    foreach (SphereTile st in sTiles)
+    {
+      unitHexes.Add(st.ToHexTile()); //plate index passed along to hextiles, these are not units anymore
+    }
+    // === Assign neighbors to unit hexes ===
+    //TraverseAndAssignNeighbors(unitHexes, sTiles);
+    //RecursiveNeighbors(unitHexes);
+  }
   void SubdivideAndDuals()
   {
     List<Triangle> currentTris;
@@ -171,45 +194,27 @@ public class PolySphere
       //st.scale *= scale;
       st.Build();
     }
-
-    unitHexes = new List<HexTile>();
-    foreach (SphereTile st in sTiles)
-    {
-      // Cache neighbors in list
-      foreach (SphereTile t in st.neighborList)
-      {
-        if (!st.neighborDict.ContainsKey(t.index))
-          st.neighborDict.Add(t.index, t);
-      }
-    }
-
-    TectonicPlates(); //Gives SphereTiles a plate index
-
-    // === Cache unit hexagons ===
-    foreach (SphereTile st in sTiles)
-    {
-      unitHexes.Add(st.ToHexTile()); //plate index passed along to hextiles
-    }
-    // === Assign neighbors to unit hexes ===
-    //TraverseAndAssignNeighbors(unitHexes, sTiles);
-    //RecursiveNeighbors(unitHexes);
   }
 
   void TectonicPlates()
   {
-    plates = new List<List<SphereTile>>();
-    //Start at some random points across the sphere
+    //Give each spheretile (and hextile) a plate index
+    //make plates based on index
+    tPlates = new List<List<SphereTile>>();
     int i = 0; //increments through plates
+    //Start at some random points across the sphere
     //each tile will have a chance to be assigned its own plate
-    while (plates.Count < minPlates)
+    while (tPlates.Count < minPlates)
     {
       foreach (SphereTile st in sTiles)
       {
         float rand = Random.Range(0, 1f);
-        if (rand > 0.99f && plates.Count < maxPlates)
+        if (rand > 0.99f && tPlates.Count < maxPlates)
         {
-          plates.Add(new List<SphereTile>());
-          plates[i].Add(st);
+          tPlates.Add(new List<SphereTile>());
+          tPlates[i].Add(st);
+          //this makes this spheretile an origin of a plate, which we will build the plates from with a floodfill
+          st.plateOrigin = true;
           i++;
         }
       } 
@@ -217,16 +222,39 @@ public class PolySphere
     //Fill in neighbors, fill in neighbors of neighbors, repeat until filled
     FloodFill();
     //Debug.Log(plates.Count);
+    //Make the plates!
+    BuildPlates();
+    //Create stress forces between plates
+    Tectonics();
+  }
+
+  void Tectonics()
+  {
+    foreach (Plate p in plates)
+    {
+      foreach (SphereTile st in p.boundary)
+      {
+        foreach (SphereTile stn in st.neighborList)
+        {
+          if (stn.boundary && stn.plate != st.plate)
+          {
+            //if we're looking at a neighbor with a different plate index
+            //create stress between the two tiles based on plate params
+
+          }
+        }
+      }
+    }
   }
 
   void FloodFill() //Recursive
   {
-    int i = 0;
+    int i = 0; //for the while loop
     bool go = false;
     List<SphereTile> toAssign = new List<SphereTile>();
-    while (i < plates.Count)
+    while (i < tPlates.Count)
     {
-      foreach (SphereTile st in plates[i])
+      foreach (SphereTile st in tPlates[i])
       {
         foreach (SphereTile nst in st.neighborList)
         {
@@ -239,11 +267,11 @@ public class PolySphere
       }
       foreach (SphereTile s in toAssign)
       {
-        plates[i].Add(s);
+        tPlates[i].Add(s);
       }
       i++;
     }
-
+    //check if we've done all the tiles
     foreach (SphereTile s in sTiles)
     {
       if (s.plate == -1)
@@ -252,7 +280,210 @@ public class PolySphere
       }
     }
 
-    if (go) { FloodFill(); }
+    if (go) { FloodFill(); } 
+  }
+
+  void BuildPlates()
+  {
+    plates = new List<Plate>();
+    //first get toPlate and make the plates
+    for (int i = 0; i < tPlates.Count; i++)
+    {
+      List<SphereTile> toPlate = new List<SphereTile>();
+      foreach (SphereTile st in sTiles)
+      {
+        if (st.plate == i)
+        {
+          toPlate.Add(st);
+        }
+      }
+      plates.Add(new Plate(toPlate));
+    }
+    //now get boundary by looking at neighbors
+    List<SphereTile> toBoundary = new List<SphereTile>();
+    //Debug.Log(plates.Count);
+    foreach (Plate p in plates)
+    {
+      foreach (SphereTile st in p.tiles)
+      {
+        foreach (SphereTile stn in st.neighborList)
+        {
+          //Debug.Log("parent " + st.plate + " neighbor " + stn.plate);
+          if (stn.plate != st.plate)
+          {
+            //If a neighbor has a plate index other than the parent's, add it to the boundary
+            toBoundary.Add(st);
+            st.boundary = true;
+            break;
+          }
+        }
+      }
+      //set boundary
+      p.boundary = toBoundary; //Boundaries are done, now let's calculate heights based on them
+    }
+    //Now we set the heights of our spheretiles to be cached, starting with the boundary and working in
+    //At this point we are caching individual worlds and not just the base world
+    foreach (Plate p in plates)
+    {
+      foreach (SphereTile st in p.boundary)
+      {
+        foreach (SphereTile stn in st.neighborList)
+        {
+          if (stn.plate != st.plate) //if the tile and it's neighbor have different plate indexes
+          {
+            Plate neighbor = plates[stn.plate]; 
+            //create relative force between tiles and determine height of boundary
+            Vector3 pressure = st.drift - stn.drift; //positive colliding, negative receding
+            if (pressure.magnitude == 0)
+            {
+              Debug.Log("zero mag");
+            }
+            if (pressure.magnitude > 0)
+            {
+              if (!p.oceanic && !neighbor.oceanic)
+              {
+                //colliding
+              }
+              if (p.oceanic && !neighbor.oceanic)
+              {
+                //subducting
+              }
+              if (p.oceanic && neighbor.oceanic)
+              {
+                //ocean
+              }
+            }
+            else
+            {
+              if (!p.oceanic && !neighbor.oceanic)
+              {
+                //receding
+              }
+              if (p.oceanic && !neighbor.oceanic)
+              {
+                //subducting
+              }
+              if (p.oceanic && neighbor.oceanic)
+              {
+                //ocean
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  List<Triangle> Icosahedron(float scale)
+  {
+    if (scale <= 0)
+      Debug.LogError("NO SCALE?!");
+    if (scale > 50)
+      Debug.LogError("Why so big?");
+      
+    List<Triangle> output = new List<Triangle>();
+    List<Vector3> vertices = new List<Vector3>();
+
+    float goldRat = 1.618f; //golden ratio (Unity calculated it as 1.6)s
+
+    //Icosahedron coords
+    Vector3 origin = Vector3.zero,
+            xy1 = new Vector3(1, goldRat, 0) * scale,
+            xy2 = new Vector3(1, -goldRat, 0) * scale,
+            xy3 = new Vector3(-1, -goldRat, 0) * scale,
+            xy4 = new Vector3(-1, goldRat, 0) * scale,
+            xz1 = new Vector3(goldRat, 0, 1) * scale,
+            xz2 = new Vector3(goldRat, 0, -1) * scale,
+            xz3 = new Vector3(-goldRat, 0, -1) * scale,
+            xz4 = new Vector3(-goldRat, 0, 1) * scale,
+            zy1 = new Vector3(0, 1, goldRat) * scale,
+            zy2 = new Vector3(0, 1, -goldRat) * scale,
+            zy3 = new Vector3(0, -1, -goldRat) * scale,
+            zy4 = new Vector3(0, -1, goldRat) * scale;
+    icoCoords.Add(xy1);
+    icoCoords.Add(xy2);
+    icoCoords.Add(xy3);
+    icoCoords.Add(xy4);
+    icoCoords.Add(xz1);
+    icoCoords.Add(xz2);
+    icoCoords.Add(xz3);
+    icoCoords.Add(xz4);
+    icoCoords.Add(zy1);
+    icoCoords.Add(zy2);
+    icoCoords.Add(zy3);
+    icoCoords.Add(zy4);
+
+
+    //Debug.Log(xz4.magnitude);
+    vertices.Add(origin);         // 0
+    vertices.Add(origin + xy1);   // 1
+    vertices.Add(origin + xy2);   // 2
+    vertices.Add(origin + xy3);   // 3
+    vertices.Add(origin + xy4);   // 4
+    vertices.Add(origin + xz1);   // 5
+    vertices.Add(origin + xz2);   // 6
+    vertices.Add(origin + xz3);   // 7
+    vertices.Add(origin + xz4);   // 8
+    vertices.Add(origin + zy1);   // 9
+    vertices.Add(origin + zy2);   // 10
+    vertices.Add(origin + zy3);   // 11
+    vertices.Add(origin + zy4);   // 12
+
+    // === Faces of the Original 5 Triforces ===
+    output.Add(new Triangle(vertices[1], vertices[6], vertices[10]));   // 0
+    output.Add(new Triangle(vertices[1], vertices[10], vertices[4]));   // 1
+    output.Add(new Triangle(vertices[1], vertices[4], vertices[9]));    // 2
+    output.Add(new Triangle(vertices[1], vertices[9], vertices[5]));    // 3
+    output.Add(new Triangle(vertices[1], vertices[5], vertices[6]));    // 4
+    
+    output.Add(new Triangle(vertices[3], vertices[7], vertices[11]));   // 5
+    output.Add(new Triangle(vertices[3], vertices[11], vertices[2]));   // 6
+    output.Add(new Triangle(vertices[3], vertices[2], vertices[12]));   // 7
+    output.Add(new Triangle(vertices[3], vertices[12], vertices[8]));   // 8
+    output.Add(new Triangle(vertices[3], vertices[8], vertices[7]));    // 9
+
+    output.Add(new Triangle(vertices[10], vertices[7], vertices[4]));   // 10
+    output.Add(new Triangle(vertices[4], vertices[7], vertices[8]));    // 11
+    output.Add(new Triangle(vertices[4], vertices[8], vertices[9]));    // 12
+    output.Add(new Triangle(vertices[9], vertices[8], vertices[12]));   // 13
+    output.Add(new Triangle(vertices[9], vertices[12], vertices[5]));   // 14
+    output.Add(new Triangle(vertices[5], vertices[12], vertices[2]));   // 15
+    output.Add(new Triangle(vertices[5], vertices[2], vertices[6]));    // 16
+    output.Add(new Triangle(vertices[6], vertices[2], vertices[11]));   // 17
+    output.Add(new Triangle(vertices[11], vertices[10], vertices[6]));  // 18
+    output.Add(new Triangle(vertices[10], vertices[11], vertices[7]));  // 19
+
+    // Assign initial neighbors
+    output[0].AssignNeighbors(output[1],  output[4], output[18]);
+    output[1].AssignNeighbors(output[2],  output[0], output[10]);
+    output[2].AssignNeighbors(output[1],  output[12],output[3]);
+    output[3].AssignNeighbors(output[2],  output[14],output[4]);
+    output[4].AssignNeighbors(output[3],  output[16],output[0]);
+    output[5].AssignNeighbors(output[19], output[6], output[9]);
+    output[6].AssignNeighbors(output[5],  output[17],output[7]);
+    output[7].AssignNeighbors(output[6],  output[15],output[8]);
+    output[8].AssignNeighbors(output[7],  output[13],output[9]);
+    output[9].AssignNeighbors(output[8],  output[11],output[5]);
+    output[10].AssignNeighbors(output[1], output[19],output[11]);
+    output[11].AssignNeighbors(output[10],output[9], output[12]);
+    output[12].AssignNeighbors(output[11],output[13],output[2]);
+    output[13].AssignNeighbors(output[12],output[8], output[14]);
+    output[14].AssignNeighbors(output[13],output[15],output[3]);
+    output[15].AssignNeighbors(output[14],output[7], output[16]);
+    output[16].AssignNeighbors(output[15],output[17],output[4]);
+    output[17].AssignNeighbors(output[16],output[6], output[18]);
+    output[18].AssignNeighbors(output[17],output[19],output[0]);
+    output[19].AssignNeighbors(output[18],output[5], output[10]);
+
+    // --- Number tris ---
+    int count = 0;
+    foreach (Triangle t in output)
+    {
+      t.index = count;
+      count++;
+    }
+
+    return output;
   }
 
   void RecursiveNeighbors(List<Hexagon> hexes)
@@ -502,117 +733,7 @@ public class PolySphere
     return potentialNeighbors[winningNeighborIndex].index;
   }
 
-  List<Triangle> Icosahedron(float scale)
-  {
-    if (scale <= 0)
-      Debug.LogError("NO SCALE?!");
-    if (scale > 50)
-      Debug.LogError("Why so big?");
-      
-    List<Triangle> output = new List<Triangle>();
-    List<Vector3> vertices = new List<Vector3>();
-
-    float goldRat = 1.618f; //golden ratio (Unity calculated it as 1.6)s
-
-    //Icosahedron coords
-    Vector3 origin = Vector3.zero,
-            xy1 = new Vector3(1, goldRat, 0) * scale,
-            xy2 = new Vector3(1, -goldRat, 0) * scale,
-            xy3 = new Vector3(-1, -goldRat, 0) * scale,
-            xy4 = new Vector3(-1, goldRat, 0) * scale,
-            xz1 = new Vector3(goldRat, 0, 1) * scale,
-            xz2 = new Vector3(goldRat, 0, -1) * scale,
-            xz3 = new Vector3(-goldRat, 0, -1) * scale,
-            xz4 = new Vector3(-goldRat, 0, 1) * scale,
-            zy1 = new Vector3(0, 1, goldRat) * scale,
-            zy2 = new Vector3(0, 1, -goldRat) * scale,
-            zy3 = new Vector3(0, -1, -goldRat) * scale,
-            zy4 = new Vector3(0, -1, goldRat) * scale;
-    icoCoords.Add(xy1);
-    icoCoords.Add(xy2);
-    icoCoords.Add(xy3);
-    icoCoords.Add(xy4);
-    icoCoords.Add(xz1);
-    icoCoords.Add(xz2);
-    icoCoords.Add(xz3);
-    icoCoords.Add(xz4);
-    icoCoords.Add(zy1);
-    icoCoords.Add(zy2);
-    icoCoords.Add(zy3);
-    icoCoords.Add(zy4);
-
-
-    //Debug.Log(xz4.magnitude);
-    vertices.Add(origin);         // 0
-    vertices.Add(origin + xy1);   // 1
-    vertices.Add(origin + xy2);   // 2
-    vertices.Add(origin + xy3);   // 3
-    vertices.Add(origin + xy4);   // 4
-    vertices.Add(origin + xz1);   // 5
-    vertices.Add(origin + xz2);   // 6
-    vertices.Add(origin + xz3);   // 7
-    vertices.Add(origin + xz4);   // 8
-    vertices.Add(origin + zy1);   // 9
-    vertices.Add(origin + zy2);   // 10
-    vertices.Add(origin + zy3);   // 11
-    vertices.Add(origin + zy4);   // 12
-
-    // === Faces of the Original 5 Triforces ===
-    output.Add(new Triangle(vertices[1], vertices[6], vertices[10]));   // 0
-    output.Add(new Triangle(vertices[1], vertices[10], vertices[4]));   // 1
-    output.Add(new Triangle(vertices[1], vertices[4], vertices[9]));    // 2
-    output.Add(new Triangle(vertices[1], vertices[9], vertices[5]));    // 3
-    output.Add(new Triangle(vertices[1], vertices[5], vertices[6]));    // 4
-    
-    output.Add(new Triangle(vertices[3], vertices[7], vertices[11]));   // 5
-    output.Add(new Triangle(vertices[3], vertices[11], vertices[2]));   // 6
-    output.Add(new Triangle(vertices[3], vertices[2], vertices[12]));   // 7
-    output.Add(new Triangle(vertices[3], vertices[12], vertices[8]));   // 8
-    output.Add(new Triangle(vertices[3], vertices[8], vertices[7]));    // 9
-
-    output.Add(new Triangle(vertices[10], vertices[7], vertices[4]));   // 10
-    output.Add(new Triangle(vertices[4], vertices[7], vertices[8]));    // 11
-    output.Add(new Triangle(vertices[4], vertices[8], vertices[9]));    // 12
-    output.Add(new Triangle(vertices[9], vertices[8], vertices[12]));   // 13
-    output.Add(new Triangle(vertices[9], vertices[12], vertices[5]));   // 14
-    output.Add(new Triangle(vertices[5], vertices[12], vertices[2]));   // 15
-    output.Add(new Triangle(vertices[5], vertices[2], vertices[6]));    // 16
-    output.Add(new Triangle(vertices[6], vertices[2], vertices[11]));   // 17
-    output.Add(new Triangle(vertices[11], vertices[10], vertices[6]));  // 18
-    output.Add(new Triangle(vertices[10], vertices[11], vertices[7]));  // 19
-
-    // Assign initial neighbors
-    output[0].AssignNeighbors(output[1],  output[4], output[18]);
-    output[1].AssignNeighbors(output[2],  output[0], output[10]);
-    output[2].AssignNeighbors(output[1],  output[12],output[3]);
-    output[3].AssignNeighbors(output[2],  output[14],output[4]);
-    output[4].AssignNeighbors(output[3],  output[16],output[0]);
-    output[5].AssignNeighbors(output[19], output[6], output[9]);
-    output[6].AssignNeighbors(output[5],  output[17],output[7]);
-    output[7].AssignNeighbors(output[6],  output[15],output[8]);
-    output[8].AssignNeighbors(output[7],  output[13],output[9]);
-    output[9].AssignNeighbors(output[8],  output[11],output[5]);
-    output[10].AssignNeighbors(output[1], output[19],output[11]);
-    output[11].AssignNeighbors(output[10],output[9], output[12]);
-    output[12].AssignNeighbors(output[11],output[13],output[2]);
-    output[13].AssignNeighbors(output[12],output[8], output[14]);
-    output[14].AssignNeighbors(output[13],output[15],output[3]);
-    output[15].AssignNeighbors(output[14],output[7], output[16]);
-    output[16].AssignNeighbors(output[15],output[17],output[4]);
-    output[17].AssignNeighbors(output[16],output[6], output[18]);
-    output[18].AssignNeighbors(output[17],output[19],output[0]);
-    output[19].AssignNeighbors(output[18],output[5], output[10]);
-
-    // --- Number tris ---
-    int count = 0;
-    foreach (Triangle t in output)
-    {
-      t.index = count;
-      count++;
-    }
-
-    return output;
-  }
+ 
 
   public static int[] GetLeftHexagonInitialNeighborsAtSubdivion(int subdivisionLevel)
   {

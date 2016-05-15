@@ -101,19 +101,31 @@ public class WorldManager : MonoBehaviour
     return BinaryHandler.ReadData<World>(World.cachePath);
   }
 
-  void SetHeights()
+  void SetHeights() //@TODO we should be reading heights from hextile (based on the worldseed?)
   {
+    //Alright, let's get rid of this simplex nonsense and get some heights from the plate tectonics
+    //Each plate has has two axes it's moving on with a small velocity, each tile shares this movement
+    //Well we're going to have to do this before caching and save heights into the hextiles for access to plates
+    //Then read those heights
+    foreach (HexTile ht in activeWorld.tiles)
+    {
+      ht.hexagon.Scale(ht.height);
+    }
+
+    /*
     float s = Random.Range(-99999,99999);
     foreach (HexTile ht in activeWorld.tiles)
     {
-      ht.hexagon.Scale(1f + (int)(100 * (0.7f * Mathf.Abs(simplex.coherentNoise(ht.hexagon.center.x, ht.hexagon.center.y, ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, dAmplitude)
-                            + 0.3f * Mathf.Abs(simplex.coherentNoise(s*ht.hexagon.center.x, s*ht.hexagon.center.y, s*ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, dAmplitude)))))/100f);
+      ht.hexagon.Scale(1f + (int)(100 * (0.7f * Mathf.Abs(simplex.coherentNoise(ht.hexagon.center.x, ht.hexagon.center.y, ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, dAmplitude) //))) / 100f);
+                           + 0.3f * Mathf.Abs(simplex.coherentNoise(s*ht.hexagon.center.x, s*ht.hexagon.center.y, s*ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, dAmplitude)))))/100f);
       //Debug.Log(1f + (int)(100 * (0.7f * Mathf.Abs(simplex.coherentNoise(ht.hexagon.center.x, ht.hexagon.center.y, ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, dAmplitude)
       //                      + 0.3f * Mathf.Abs(simplex.coherentNoise(s * ht.hexagon.center.x, s * ht.hexagon.center.y, s * ht.hexagon.center.z, octaves, multiplier, amplitude, lacunarity, dAmplitude)))))/100f);
+      //Debug.Log(ht.hexagon.scale);
     }
+    */
   }
   //@TODO: This is preliminary, it sets the ocean tiles using average scale 
-  //by making any tile 20% of the average or below blue, then scaling the blue tiles up to the average.
+  //by making any tile close to the average or below blue, then scaling the blue tiles up to the average.
   void CreateOcean()
   {
     foreach (HexTile ht in activeWorld.tiles)
@@ -129,7 +141,7 @@ public class WorldManager : MonoBehaviour
         typeToSet = TileType.Gray;
       if (rand > 0.4f)
         typeToSet = TileType.Green;
-      if (ht.hexagon.scale >= averageScale)
+      if (ht.hexagon.scale >= averageScale*0.99f)
       {
         ht.type = typeToSet;
       }
@@ -138,16 +150,16 @@ public class WorldManager : MonoBehaviour
     {
       if (ht.type == TileType.Blue)
       {
-        ht.hexagon.Scale(averageScale / ht.hexagon.scale);
+        ht.hexagon.Scale(averageScale*0.99f / ht.hexagon.scale);
       }
     }
   }
-  //So now with the land masses, we're going to make the types more coherent like we did in Zone -> SpreadGround and RefineGround
+  //So now with the land masses, we're going to make the "biomes" more coherent like we did in Zone -> SpreadGround and RefineGround
   void RefineTypes()
   {
     foreach (HexTile ht in activeWorld.tiles)
     {
-      int i = 0;
+      //int i = 0;
       //foreach (HexTile h in ht.ne) ;
     }
   }

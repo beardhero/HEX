@@ -1,17 +1,22 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Linq;
 using System.Collections.Generic;
 using LibNoise.Unity;
 using LibNoise.Unity.Generator;
 using LibNoise.Unity.Operator;
-
+//This is where you get to use things that you don't want to serialize (vectors, etc.)
+//Remember to add things to ToHexTile() and HexTile if you want them to be serialized
 public class SphereTile
 {
   public int index;    // The index of the tile in our map. Translates into HexTile.id [set by PolySphere]
   public int[] neighbors;   // Indexes of the surrounding sphere tiles in our map [set by PolySphere] in array form for serialization
   public int plate = -1; //Polysphere
+  public float height; //passed to HexTile
   public Dictionary<int, SphereTile> neighborDict;    // A list of unique neighbors
   public List<SphereTile> neighborList;   // This is the first raw list, which will contain duplicates
+  public bool boundary; //plate boundary
+  public bool plateOrigin;
   public bool colliding; //OnCollisionStay
   public TileType type;
   //The inital triangles from the subdivided polysphere which we will use to build the spheretile
@@ -22,6 +27,30 @@ public class SphereTile
   //Checking equality with the center vertex 
   public Vector3 center{ get; set; }
   public Vector3 origin;
+  public Vector3 drift;
+
+  //Tectonics Properties
+  private float _elevation;
+  public float elevation
+  {
+    get { return _elevation; }
+    set { _elevation = value; }
+  }
+  private float _heat;
+
+  public float heat
+  {
+    get { return _heat; }
+    set { _heat = value; }
+  }
+  private float _precipitation;
+
+  public float precipitation
+  {
+    get { return _precipitation; }
+    set { _precipitation = value; }
+  }
+
   //Scaling property
   private float _scale = 1;
   public float scale
@@ -97,7 +126,7 @@ public class SphereTile
     List<float> subs = new List<float>();
 
 
-    for (int z=0;z < 6;z++) //Make our 12 triangles (the pentagons apparently work) @TODO: optimize, scew
+    for (int z=0;z < 6;z++) //Make our 12 triangles (the pentagons apparently work) 
     {
       //Rotate our tester to where we want it, check for subTriangle here
       triCopyTrans.RotateAround(center, center, 60);
@@ -136,9 +165,14 @@ public class SphereTile
     Vector3[] verts = new Vector3[1];
     verts = new Vector3[]{faceTris[0].v2, faceTris[0].v3, faceTris[1].v3, faceTris[2].v3, faceTris[3].v3, faceTris[4].v3};
     Hexagon hex = new Hexagon(index, faceTris[0].v1, verts, origin);
-    Dictionary<Vector3, SphereTile> neighbs = new Dictionary<Vector3, SphereTile>();
-
-    return new HexTile(hex, plate);
+    //Dictionary<Vector3, SphereTile> neighbs = new Dictionary<Vector3, SphereTile>();
+    //convert neighbors to index list
+    List<int> neig = new List<int>();
+    foreach (SphereTile st in neighborDict.Values.ToList())
+    {
+      neig.Add(st.index);
+    }
+    return new HexTile(hex, (int)this.plate, neig, boundary, height);
   }
 }
 

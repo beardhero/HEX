@@ -10,7 +10,7 @@ public class WorldRenderer : MonoBehaviour
   public int tileCountW;
   public int tileCountH;
   public bool hexagonal; // false for triangle uvs, true for hexagonal
-  public List<List<HexTile>> hPlates;
+  public List<List<SphereTile>> hPlates;
   bool controlx;
   bool controly;
   bool controlz;
@@ -36,11 +36,11 @@ public class WorldRenderer : MonoBehaviour
     for (int i = 0; i < PolySphere.maxPlates; i++)
     {
       
-      output.Add(Plate(world, tileSet, i));
+      output.Add(RPlate(world, tileSet, i));
     }
     return output;
   }
-  public GameObject Plate(World world, TileSet tileSet, int i)
+  public GameObject RPlate(World world, TileSet tileSet, int i)
   {
     GameObject output = (GameObject)Instantiate(worldPrefab, Vector3.zero, Quaternion.identity);
 
