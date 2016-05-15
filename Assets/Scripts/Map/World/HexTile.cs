@@ -8,13 +8,16 @@ public class HexTile
 {
   public int index;
   public int plate = -1;
+  public float height;
   string terrainType;
   public Hexagon hexagon;
   public TileType type;
   public List<int> neighbors;
   public bool boundary;
-  
-  //Properties
+
+  //Tectonics
+  public float pressure /*colliding positive, seperating negative*/, shear, scale, temp, humidity;
+
   private float _elevation;
   public float elevation
   {
@@ -35,7 +38,6 @@ public class HexTile
     get { return _precipitation; }
     set { _precipitation = value; }
   }
-
   public HexTile() { }
 
   public HexTile(Hexagon h)
@@ -43,12 +45,14 @@ public class HexTile
     index = h.index;
     hexagon = h;
   }
-  public HexTile(Hexagon h, int p, List<int> neighbs)
+  public HexTile(Hexagon h, int p, List<int> neighbs, bool b, float hi)
   {
     index = h.index;
     hexagon = h;
     plate = p;
+    boundary = b;
     neighbors = new List<int>(neighbs);
+    height = hi;
   }
   public void ChangeType(TileType t)
   {

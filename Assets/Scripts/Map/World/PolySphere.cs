@@ -43,9 +43,31 @@ public class PolySphere
     icoCoords = new List<Vector3>();
     icosahedronTris = Icosahedron(scale);
  
-    SubdivideAndDuals();
+    SubdivideAndDuals(); //Builds SphereTiles
+    TectonicPlates(); //Populates plates and creates stress forces between them.
+    CacheHexes(); //Converts to HexTiles for serialization
   }
-
+  void CacheHexes()
+  {
+    unitHexes = new List<HexTile>();
+    foreach (SphereTile st in sTiles)
+    {
+      // Cache neighbors in list
+      foreach (SphereTile t in st.neighborList)
+      {
+        if (!st.neighborDict.ContainsKey(t.index))
+          st.neighborDict.Add(t.index, t);
+      }
+    }
+    // === Cache unit hexagons ===
+    foreach (SphereTile st in sTiles)
+    {
+      unitHexes.Add(st.ToHexTile()); //plate index passed along to hextiles, these are not units anymore
+    }
+    // === Assign neighbors to unit hexes ===
+    //TraverseAndAssignNeighbors(unitHexes, sTiles);
+    //RecursiveNeighbors(unitHexes);
+  }
   void SubdivideAndDuals()
   {
     List<Triangle> currentTris;
@@ -172,28 +194,6 @@ public class PolySphere
       //st.scale *= scale;
       st.Build();
     }
-    
-    unitHexes = new List<HexTile>();
-    foreach (SphereTile st in sTiles)
-    {
-      // Cache neighbors in list
-      foreach (SphereTile t in st.neighborList)
-      {
-        if (!st.neighborDict.ContainsKey(t.index))
-          st.neighborDict.Add(t.index, t);
-      }
-    }
-
-    TectonicPlates(); //Populates plates
-
-    // === Cache unit hexagons ===
-    foreach (SphereTile st in sTiles)
-    {
-      unitHexes.Add(st.ToHexTile()); //plate index passed along to hextiles
-    }
-    // === Assign neighbors to unit hexes ===
-    //TraverseAndAssignNeighbors(unitHexes, sTiles);
-    //RecursiveNeighbors(unitHexes);
   }
 
   void TectonicPlates()
@@ -213,6 +213,8 @@ public class PolySphere
         {
           tPlates.Add(new List<SphereTile>());
           tPlates[i].Add(st);
+          //this makes this spheretile an origin of a plate, which we will build the plates from with a floodfill
+          st.plateOrigin = true;
           i++;
         }
       } 
@@ -222,6 +224,27 @@ public class PolySphere
     //Debug.Log(plates.Count);
     //Make the plates!
     BuildPlates();
+    //Create stress forces between plates
+    Tectonics();
+  }
+
+  void Tectonics()
+  {
+    foreach (Plate p in plates)
+    {
+      foreach (SphereTile st in p.boundary)
+      {
+        foreach (SphereTile stn in st.neighborList)
+        {
+          if (stn.boundary && stn.plate != st.plate)
+          {
+            //if we're looking at a neighbor with a different plate index
+            //create stress between the two tiles based on plate params
+
+          }
+        }
+      }
+    }
   }
 
   void FloodFill() //Recursive
@@ -229,7 +252,7 @@ public class PolySphere
     int i = 0; //for the while loop
     bool go = false;
     List<SphereTile> toAssign = new List<SphereTile>();
-    while (i < plates.Count)
+    while (i < tPlates.Count)
     {
       foreach (SphereTile st in tPlates[i])
       {
@@ -262,8 +285,9 @@ public class PolySphere
 
   void BuildPlates()
   {
+    plates = new List<Plate>();
     //first get toPlate and make the plates
-    for (int i = 0; i < numberOfPlates; i++)
+    for (int i = 0; i < tPlates.Count; i++)
     {
       List<SphereTile> toPlate = new List<SphereTile>();
       foreach (SphereTile st in sTiles)
@@ -273,16 +297,84 @@ public class PolySphere
           toPlate.Add(st);
         }
       }
+      plates.Add(new Plate(toPlate));
     }
-    //now get toBoundary by looking at neighbors
-    foreach (Plate st in plates)
+    //now get boundary by looking at neighbors
+    List<SphereTile> toBoundary = new List<SphereTile>();
+    //Debug.Log(plates.Count);
+    foreach (Plate p in plates)
     {
-      foreach
+      foreach (SphereTile st in p.tiles)
+      {
+        foreach (SphereTile stn in st.neighborList)
+        {
+          //Debug.Log("parent " + st.plate + " neighbor " + stn.plate);
+          if (stn.plate != st.plate)
+          {
+            //If a neighbor has a plate index other than the parent's, add it to the boundary
+            toBoundary.Add(st);
+            st.boundary = true;
+            break;
+          }
+        }
+      }
+      //set boundary
+      p.boundary = toBoundary; //Boundaries are done, now let's calculate heights based on them
     }
+    //Now we set the heights of our spheretiles to be cached, starting with the boundary and working in
+    //At this point we are caching individual worlds and not just the base world
+    foreach (Plate p in plates)
+    {
+      foreach (SphereTile st in p.boundary)
+      {
+        foreach (SphereTile stn in st.neighborList)
+        {
+          if (stn.plate != st.plate) //if the tile and it's neighbor have different plate indexes
+          {
+            Plate neighbor = plates[stn.plate]; 
+            //create relative force between tiles and determine height of boundary
+            Vector3 pressure = st.drift - stn.drift; //positive colliding, negative receding
+            if (pressure.magnitude == 0)
+            {
+              Debug.Log("zero mag");
+            }
+            if (pressure.magnitude > 0)
+            {
+              if (!p.oceanic && !neighbor.oceanic)
+              {
+                //colliding
+              }
+              if (p.oceanic && !neighbor.oceanic)
+              {
+                //subducting
+              }
+              if (p.oceanic && neighbor.oceanic)
+              {
+                //ocean
+              }
+            }
+            else
+            {
+              if (!p.oceanic && !neighbor.oceanic)
+              {
+                //receding
+              }
+              if (p.oceanic && !neighbor.oceanic)
+              {
+                //subducting
+              }
+              if (p.oceanic && neighbor.oceanic)
+              {
+                //ocean
+              }
+            }
+          }
+        }
+      }
     }
   }
 
- List<Triangle> Icosahedron(float scale)
+  List<Triangle> Icosahedron(float scale)
   {
     if (scale <= 0)
       Debug.LogError("NO SCALE?!");

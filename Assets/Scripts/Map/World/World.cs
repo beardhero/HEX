@@ -26,7 +26,7 @@ public class World
 
   [HideInInspector] public List<HexTile> tiles;
   [HideInInspector] public List<HexTile> pentagons;
-  [HideInInspector] public List<Plate> plates;
+  //[HideInInspector] public List<Plate> plates;
   [HideInInspector] public Dictionary<int, int> tileToPlate; //key hextile.index, value plate index
 
   private bool neighborInit;
@@ -93,7 +93,7 @@ public class World
       Debug.Log("tiles not null during cache prep");
   }
   
-  public void CacheHexes(PolySphere s)  // Executed by the cacher.  @CHANGE: I'm now directly converting spheretiles to hextiles
+  public void CacheHexes(PolySphere s)  // Executed by the cacher.  @CHANGE: Now directly converting spheretiles to hextiles
   {
     
     tiles = new List<HexTile>(s.unitHexes);

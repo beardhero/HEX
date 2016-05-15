@@ -5,14 +5,18 @@ using System.Collections.Generic;
 using LibNoise.Unity;
 using LibNoise.Unity.Generator;
 using LibNoise.Unity.Operator;
-
+//This is where you get to use things that you don't want to serialize (vectors, etc.)
+//Remember to add things to ToHexTile() and HexTile if you want them to be serialized
 public class SphereTile
 {
   public int index;    // The index of the tile in our map. Translates into HexTile.id [set by PolySphere]
   public int[] neighbors;   // Indexes of the surrounding sphere tiles in our map [set by PolySphere] in array form for serialization
   public int plate = -1; //Polysphere
+  public float height; //passed to HexTile
   public Dictionary<int, SphereTile> neighborDict;    // A list of unique neighbors
   public List<SphereTile> neighborList;   // This is the first raw list, which will contain duplicates
+  public bool boundary; //plate boundary
+  public bool plateOrigin;
   public bool colliding; //OnCollisionStay
   public TileType type;
   //The inital triangles from the subdivided polysphere which we will use to build the spheretile
@@ -23,6 +27,30 @@ public class SphereTile
   //Checking equality with the center vertex 
   public Vector3 center{ get; set; }
   public Vector3 origin;
+  public Vector3 drift;
+
+  //Tectonics Properties
+  private float _elevation;
+  public float elevation
+  {
+    get { return _elevation; }
+    set { _elevation = value; }
+  }
+  private float _heat;
+
+  public float heat
+  {
+    get { return _heat; }
+    set { _heat = value; }
+  }
+  private float _precipitation;
+
+  public float precipitation
+  {
+    get { return _precipitation; }
+    set { _precipitation = value; }
+  }
+
   //Scaling property
   private float _scale = 1;
   public float scale
@@ -144,7 +172,7 @@ public class SphereTile
     {
       neig.Add(st.index);
     }
-    return new HexTile(hex, (int)this.plate, neig);
+    return new HexTile(hex, (int)this.plate, neig, boundary, height);
   }
 }
 
