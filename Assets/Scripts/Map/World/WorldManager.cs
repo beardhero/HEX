@@ -73,7 +73,7 @@ public class WorldManager : MonoBehaviour
     //Seed the world heights
     SetHeights();
     
-    CreateOcean();
+    //CreateOcean();
     
     currentWorldObject = new GameObject("World");
     currentWorldTrans = currentWorldObject.transform;
@@ -109,7 +109,8 @@ public class WorldManager : MonoBehaviour
     //Then read those heights
     foreach (HexTile ht in activeWorld.tiles)
     {
-      ht.hexagon.Scale(ht.height);
+	  //Debug.Log (ht.height);
+      ht.hexagon.scale = 1f + ht.height;
     }
 
     /*

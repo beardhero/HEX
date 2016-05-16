@@ -9,7 +9,24 @@ public class Hexagon
   public int[] neighbors;
   public bool isPentagon;
   private float _scale;
-  public float scale { get; set; }
+	public float scale { get{return _scale;}
+	  set{
+			v1 /= v1.magnitude;
+			v1 *= value;
+			v2 /= v2.magnitude;
+			v2 *= value;
+			v3 /= v3.magnitude;
+			v3 *= value;
+			v4 /= v4.magnitude;
+			v4 *= value;
+			v5 /= v5.magnitude;
+			v5 *= value;
+			v6 /= v6.magnitude;
+			v6 *= value;
+			center = (v1 + v2 + v3 + v4 + v5 + v6) / 6f;
+			_scale = center.magnitude; //scales may differ
+		}
+  }
 
   public Hexagon(){}
   public Hexagon(int i, Vector3 c, Vector3[] verts, SerializableVector3 origin)
@@ -32,7 +49,7 @@ public class Hexagon
       }
     }   
   }
-  public void Scale(float _scale) //This will multiply all vectors in the hexagon by the value, if you want to set the scale directly you must first normalize the hexagon
+  public void Scale(float _scale) //This will multiply all vectors in the hexagon by the value, if you want to set the scale directly set the property
   {
     v1 *= _scale;
     v2 *= _scale;

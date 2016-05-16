@@ -230,21 +230,49 @@ public class PolySphere
 
   void Tectonics()
   {
-    foreach (Plate p in plates)
-    {
-      foreach (SphereTile st in p.boundary)
-      {
-        foreach (SphereTile stn in st.neighborList)
-        {
-          if (stn.boundary && stn.plate != st.plate)
-          {
-            //if we're looking at a neighbor with a different plate index
-            //create stress between the two tiles based on plate params
-
-          }
-        }
-      }
-    }
+	//Now we set the heights of our spheretiles to be cached, starting with the boundary and working in
+	//At this point we are caching individual worlds and not just the base world
+	//First, we do a random seed
+	float s = Random.Range(-99999,99999);
+	foreach (SphereTile ht in sTiles)
+	{
+		ht.height = (1f + (int)(100 * (0.7f * Mathf.Abs(simplex.coherentNoise(ht.center.x, ht.center.y, ht.center.z, octaves, multiplier, amplitude, lacunarity, dAmplitude) //))) / 100f);
+			+ 0.3f * Mathf.Abs(simplex.coherentNoise(s*ht.center.x, s*ht.center.y, s*ht.center.z, octaves, multiplier, amplitude, lacunarity, dAmplitude)))))/100f);
+	}
+	foreach (Plate p in plates)
+	{
+		foreach (SphereTile st in p.boundary)
+		{
+			foreach (SphereTile stn in st.neighborList)
+			{
+				if (stn.plate != st.plate) //if the tile and it's neighbor have different plate indexes
+				{
+					Plate neighbor = plates[stn.plate]; 
+					//create relative force between tiles and determine height of boundary
+					Vector3 pressure = st.drift - stn.drift; //overall direction of drift, heights will shift in this direction
+	
+					if (pressure.magnitude == 0)
+					{
+					  Debug.Log("zero mag");
+					}
+					if (!p.oceanic && !neighbor.oceanic)
+					{
+					  //land
+					  //max height and adjust height with drift component in center direction
+					  	
+					}
+					if (p.oceanic && !neighbor.oceanic)
+					{
+					  //subducting
+					}
+					if (p.oceanic && neighbor.oceanic)
+					{
+					  //ocean
+					}
+				}
+			}
+		}
+	}
   }
 
   void FloodFill() //Recursive
@@ -321,57 +349,7 @@ public class PolySphere
       //set boundary
       p.boundary = toBoundary; //Boundaries are done, now let's calculate heights based on them
     }
-    //Now we set the heights of our spheretiles to be cached, starting with the boundary and working in
-    //At this point we are caching individual worlds and not just the base world
-    foreach (Plate p in plates)
-    {
-      foreach (SphereTile st in p.boundary)
-      {
-        foreach (SphereTile stn in st.neighborList)
-        {
-          if (stn.plate != st.plate) //if the tile and it's neighbor have different plate indexes
-          {
-            Plate neighbor = plates[stn.plate]; 
-            //create relative force between tiles and determine height of boundary
-            Vector3 pressure = st.drift - stn.drift; //positive colliding, negative receding
-            if (pressure.magnitude == 0)
-            {
-              Debug.Log("zero mag");
-            }
-            if (pressure.magnitude > 0)
-            {
-              if (!p.oceanic && !neighbor.oceanic)
-              {
-                //colliding
-              }
-              if (p.oceanic && !neighbor.oceanic)
-              {
-                //subducting
-              }
-              if (p.oceanic && neighbor.oceanic)
-              {
-                //ocean
-              }
-            }
-            else
-            {
-              if (!p.oceanic && !neighbor.oceanic)
-              {
-                //receding
-              }
-              if (p.oceanic && !neighbor.oceanic)
-              {
-                //subducting
-              }
-              if (p.oceanic && neighbor.oceanic)
-              {
-                //ocean
-              }
-            }
-          }
-        }
-      }
-    }
+    
   }
 
   List<Triangle> Icosahedron(float scale)
