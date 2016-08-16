@@ -87,6 +87,8 @@ public class SphereTile
   }
 
   //Unit SphereTile
+  public SphereTile() { }
+
   public SphereTile(Vector3 c, Vector3 o)
   {
     center = c;
@@ -172,7 +174,7 @@ public class SphereTile
     {
       neig.Add(st.index);
     }
-    return new HexTile(hex, (int)this.plate, neig, boundary, height);
+    return new HexTile(hex, (int)this.plate, neig, boundary, height, type);
   }
 }
 

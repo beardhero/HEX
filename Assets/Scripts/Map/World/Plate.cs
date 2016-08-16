@@ -5,6 +5,7 @@ using System.Collections.Generic;
 public class Plate {
   public int index;
   public bool oceanic;
+  public bool subducted;
   public List<SphereTile> tiles;
   public SphereTile origin;
   public float driftAngle, spinAngle; //spin axis is the plate origin's center
@@ -15,8 +16,9 @@ public class Plate {
   public List<SphereTile> boundary;
   public float oceanProb = 0.5f;
 
-  public Plate(List<SphereTile> t)
+  public Plate(List<SphereTile> t, SphereTile ori)
   {
+    origin = ori;
     float driftx, drifty, driftz; //drift axis components(randomized)
     tiles = new List<SphereTile>(t);
     //Random spin and drift
@@ -29,8 +31,8 @@ public class Plate {
     drift = driftAxis * driftAngle;
     //Define random rotation about center axis (spin)
     spinAngle = Random.Range(0.1f, 0.24f);
-    //Find origin tile because apparently passing it was too hard
-    //and calculate movement
+
+    /* used to be for finding origin, now passed
     int i = 0;
     foreach (SphereTile st in tiles)
     {
@@ -42,16 +44,18 @@ public class Plate {
       if (i > 1)
         Debug.Log("There are " + i + " origins in plate " + index);
     }
-    //now set spin
+    */
+
+    //set spin
     spin = origin.center * spinAngle;
 
     //oceanic?
-    float rand = Random.Range(0, 1);
+    float rand = Random.Range(0, 1f);
     if (rand <= oceanProb)
     {
       oceanic = true;
-    } 
-
+    }
+    //calculate movement
     //set drift for each tile
     foreach (SphereTile st in tiles)
     {

@@ -35,7 +35,6 @@ public class WorldRenderer : MonoBehaviour
     //Create a mesh for each plate and put it in the list of outputs
     for (int i = 0; i < PolySphere.maxPlates; i++)
     {
-      
       output.Add(RPlate(world, tileSet, i));
     }
     return output;
@@ -183,6 +182,7 @@ public class WorldRenderer : MonoBehaviour
     }
     else //Triangle
     {
+      Debug.Log("triangle uvs"); //Assumed that the texture's tiles are equilateral
       float uv2x = 1.0f / tileCountW;
       float uv1x = uv2x / 2;
       float uv1y = 1.0f / tileCountH;
@@ -195,7 +195,7 @@ public class WorldRenderer : MonoBehaviour
         if (ht.plate == i)
         {
           IntCoord uvCoord = tileSet.GetUVForType(ht.type);
-          //Debug.Log("xCoord: "+ uvCoord.x + "  type: "+ ht.type);
+          Debug.Log("xCoord: "+ uvCoord.x + "  type: "+ ht.type);
           Vector2 uvOffset = new Vector2((uvCoord.x * uv2.x), (uvCoord.y * uv1.y));
 
           // Origin point

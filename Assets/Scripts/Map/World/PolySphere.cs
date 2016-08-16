@@ -5,13 +5,14 @@ using System.Linq;
 
 public class PolySphere
 {
+  public static Random rnd = new Random();
   //Initial icosahedron coords
   public static List<Vector3> icoCoords;
   public GameObject go; //Using this transform to rotate around centers of hexes
   public Vector3 origin;
   public int subdivisions;
-  public static int maxPlates = 12; //max number of tectonic plates
-  public static int minPlates = 3;
+  public static int maxPlates = 24; //max number of tectonic plates
+  public static int minPlates = 12;
   public float scale = 1;
 
   public List<Triangle> icosahedronTris;
@@ -33,13 +34,13 @@ public class PolySphere
     scale = s;
     subdivisions = d;
     //For seeding dual centers
-    amplitude = Random.Range(0.01f, 0.1f);
-    lacunarity = Random.Range(0.2f, 2f);
-    dAmplitude = Random.Range(0.1f, 0.9f);
-    //Vector3 weights = Random.Vector3;
-    octaves = Random.Range(1, 10);
-    multiplier = Random.Range(1, 24);
     simplex = new SimplexNoise(GameManager.gameSeed);
+    octaves = Random.Range(1, 10);
+    multiplier = Random.Range(9, 10);
+    amplitude = Random.Range(0.3f, 1.2f);
+    lacunarity = Random.Range(0.7f, .9f);
+    dAmplitude = Random.Range(0.5f, .1f);
+
     icoCoords = new List<Vector3>();
     icosahedronTris = Icosahedron(scale);
  
@@ -47,6 +48,7 @@ public class PolySphere
     TectonicPlates(); //Populates plates and creates stress forces between them.
     CacheHexes(); //Converts to HexTiles for serialization
   }
+
   void CacheHexes()
   {
     unitHexes = new List<HexTile>();
@@ -65,9 +67,15 @@ public class PolySphere
       unitHexes.Add(st.ToHexTile()); //plate index passed along to hextiles, these are not units anymore
     }
     // === Assign neighbors to unit hexes ===
-    //TraverseAndAssignNeighbors(unitHexes, sTiles);
-    //RecursiveNeighbors(unitHexes);
+    List<Hexagon> toNei = new List<Hexagon>();
+    foreach (HexTile ht in unitHexes)
+    {
+      toNei.Add(ht.hexagon);
+    }
+    //RecursiveNeighbors(toNei);
+    TraverseAndAssignNeighbors(toNei, sTiles);
   }
+
   void SubdivideAndDuals()
   {
     List<Triangle> currentTris;
@@ -201,23 +209,32 @@ public class PolySphere
     //Give each spheretile (and hextile) a plate index
     //make plates based on index
     tPlates = new List<List<SphereTile>>();
-    int i = 0; //increments through plates
+    
     //Start at some random points across the sphere
     //each tile will have a chance to be assigned its own plate
-    while (tPlates.Count < minPlates)
+    int plateNum = Random.Range(minPlates, maxPlates);
+    for (int f = 0; f < plateNum; f++)
     {
+      int i = 0; //tests if we made a plate origin
       foreach (SphereTile st in sTiles)
       {
         float rand = Random.Range(0, 1f);
-        if (rand > 0.99f && tPlates.Count < maxPlates)
+        if (rand > 0.99f && !st.plateOrigin)//&& tPlates.Count < maxPlates)
         {
           tPlates.Add(new List<SphereTile>());
-          tPlates[i].Add(st);
-          //this makes this spheretile an origin of a plate, which we will build the plates from with a floodfill
+          tPlates[f].Add(st);
+          //this makes this spheretile an origin of a plate, which we will build the plates from with a flood fill
           st.plateOrigin = true;
           i++;
+          break;
         }
-      } 
+      }
+      if (i == 0)
+      {
+        f--;
+      }
+      if (i > 1)
+        Debug.Log("i " + i);
     }
     //Fill in neighbors, fill in neighbors of neighbors, repeat until filled
     FloodFill();
@@ -230,49 +247,60 @@ public class PolySphere
 
   void Tectonics()
   {
-	//Now we set the heights of our spheretiles to be cached, starting with the boundary and working in
-	//At this point we are caching individual worlds and not just the base world
-	//First, we do a random seed
-	float s = Random.Range(-99999,99999);
-	foreach (SphereTile ht in sTiles)
-	{
-		ht.height = (1f + (int)(100 * (0.7f * Mathf.Abs(simplex.coherentNoise(ht.center.x, ht.center.y, ht.center.z, octaves, multiplier, amplitude, lacunarity, dAmplitude) //))) / 100f);
-			+ 0.3f * Mathf.Abs(simplex.coherentNoise(s*ht.center.x, s*ht.center.y, s*ht.center.z, octaves, multiplier, amplitude, lacunarity, dAmplitude)))))/100f);
-	}
-	foreach (Plate p in plates)
-	{
-		foreach (SphereTile st in p.boundary)
-		{
-			foreach (SphereTile stn in st.neighborList)
-			{
-				if (stn.plate != st.plate) //if the tile and it's neighbor have different plate indexes
-				{
-					Plate neighbor = plates[stn.plate]; 
-					//create relative force between tiles and determine height of boundary
-					Vector3 pressure = st.drift - stn.drift; //overall direction of drift, heights will shift in this direction
-	
-					if (pressure.magnitude == 0)
-					{
-					  Debug.Log("zero mag");
-					}
-					if (!p.oceanic && !neighbor.oceanic)
-					{
-					  //land
-					  //max height and adjust height with drift component in center direction
-					  	
-					}
-					if (p.oceanic && !neighbor.oceanic)
-					{
-					  //subducting
-					}
-					if (p.oceanic && neighbor.oceanic)
-					{
-					  //ocean
-					}
-				}
-			}
-		}
-	}
+	  //Now we set the heights of our spheretiles to be cached, starting with the boundary and working in
+	  //At this point we are caching individual worlds and not just the base world
+	  //First, we do a random seed
+	  float s = Random.Range(-99999,99999);
+	  foreach (SphereTile ht in sTiles)
+	  {
+		  ht.height = (1f + 1.7f * Mathf.Abs(simplex.coherentNoise(ht.center.x, ht.center.y, ht.center.z, octaves, multiplier, amplitude, lacunarity, dAmplitude) ));
+			  //+ 1.3f * Mathf.Abs(simplex.coherentNoise(s*ht.center.x, s*ht.center.y, s*ht.center.z, octaves, multiplier, amplitude, lacunarity, dAmplitude))));
+	  }
+	  foreach (Plate p in plates)
+	  {
+      //Debug.Log(p.oceanic);
+		  foreach (SphereTile st in p.boundary)
+		  {
+			  foreach (SphereTile stn in st.neighborList)
+			  {
+				  if (stn.plate != st.plate) //if the tile and it's neighbor have different plate indexes
+				  {
+            Plate neighbor = plates[stn.plate]; 
+					  //create relative force between tiles and determine height of boundary
+					  Vector3 pressure = st.drift - stn.drift; //overall direction of drift, heights will shift in this direction
+            //(a dot b)/|b|, a in direction of b
+            float pressureOnTile = Vector3.Dot(pressure, st.center - stn.center) / st.center.magnitude;
+            //shear, the component of pressure perpendicular to st.center-stn.center
+            Vector3 perp = Quaternion.AngleAxis(-90, st.center) * (st.center - stn.center);
+            float shear = Vector3.Dot(pressure, perp)/perp.magnitude ;
+
+            if (pressureOnTile == 0)
+					  {
+					    Debug.Log("perpendicular");
+					  }
+					  if (!p.oceanic && !neighbor.oceanic)
+					  {
+                //land
+                //max height and adjust height with drift component in center direction, (a dot b)/|b|
+                st.height += pressureOnTile;
+            }
+            if (!p.oceanic && neighbor.oceanic)
+            {
+              //subducted, add a little more to the land at first then drop off
+              p.subducted = true;
+              //st.height += 1f + pressureOnTile*1.01f;
+            }
+					  if (p.oceanic)
+					  {
+              //ocean
+              st.type = TileType.Blue;
+              //st.height = 1; //@TODO
+					  }
+            break;
+				  }
+			  }
+		  }
+	  }
   }
 
   void FloodFill() //Recursive
@@ -314,7 +342,8 @@ public class PolySphere
   void BuildPlates()
   {
     plates = new List<Plate>();
-    //first get toPlate and make the plates
+    SphereTile toOrigin = new SphereTile();
+    //first get toPlate and toOrigin then make the plates
     for (int i = 0; i < tPlates.Count; i++)
     {
       List<SphereTile> toPlate = new List<SphereTile>();
@@ -325,7 +354,18 @@ public class PolySphere
           toPlate.Add(st);
         }
       }
-      plates.Add(new Plate(toPlate));
+      int x = 0;
+      foreach (SphereTile st in toPlate)
+      {
+        if (st.plateOrigin)
+        {
+          toOrigin = st;
+          x++;
+        }
+        if(x>1)
+        { Debug.Log(x); }
+      }
+      plates.Add(new Plate(toPlate, toOrigin));
     }
     //now get boundary by looking at neighbors
     List<SphereTile> toBoundary = new List<SphereTile>();
@@ -351,6 +391,8 @@ public class PolySphere
     }
     
   }
+
+
 
   List<Triangle> Icosahedron(float scale)
   {
@@ -466,17 +508,21 @@ public class PolySphere
 
   void RecursiveNeighbors(List<Hexagon> hexes)
   {
-    //Logs the 12 pentagon indices
+    //tests pentagon indices, there shouldn't be any here
     foreach (Hexagon h in hexes)
     {
       if (h.isPentagon)
-        Debug.Log(h.index);
+      Debug.Log(h.index);
     }
     bool[] tilesDefined = new bool[hexes.Count];
 
     // === Set initial seed hex neighbors ===
     hexes[0].neighbors = GetLeftHexagonInitialNeighborsAtSubdivion(subdivisions);
     tilesDefined[0] = true;
+
+    int r = hexes[0].neighbors[Direction.NegY];
+    hexes[r].neighbors = GetRightHexagonInitialNeighborsAtSubdivion(subdivisions);
+    tilesDefined[r] = true;
     //Now that we have a single hexagon defined, we can define the rest on the sphere based on it
     RecursiveAssign(hexes, tilesDefined);  //This goes into the list of hexes as many times as it takes to assign directions to all hexes
   }
@@ -506,7 +552,7 @@ public class PolySphere
       { 
         for (int w = 0; w < hexes[i].neighbors.Length; w++)
         {
-          if(!tilesDefined[hexes[i].neighbors[w]])
+          if(!tilesDefined[hexes[i].neighbors[w]]) //if one of my neighbors isn't defined
           {
             DefineNeighborsFromNeighbors(hexes, hexes[i].neighbors[w], hexes[i].index);
             tilesDefined[hexes[i].neighbors[w]] = true;
@@ -536,6 +582,8 @@ public class PolySphere
     // My idea is to first define the three rings (this example shows y-ring)
     //  then to do the traversal as we discussed.
     //  I beleive the three rings must be defined first 
+
+    //Damien believes that only one tile needs to be defined, and all subsequent tiles can be done by walking to them
 
     // === Define remaining neighbors ===
     int previous = 0, direction = Direction.Y;

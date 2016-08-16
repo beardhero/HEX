@@ -16,7 +16,7 @@ public class HexTile
   public bool boundary;
 
   //Tectonics
-  public float pressure /*colliding positive, seperating negative*/, shear, scale, temp, humidity;
+  public float pressure, shear, scale, temp, humidity;
 
   private float _elevation;
   public float elevation
@@ -45,8 +45,9 @@ public class HexTile
     index = h.index;
     hexagon = h;
   }
-  public HexTile(Hexagon h, int p, List<int> neighbs, bool b, float hi)
+  public HexTile(Hexagon h, int p, List<int> neighbs, bool b, float hi, TileType t)
   {
+    type = t;
     index = h.index;
     hexagon = h;
     plate = p;
