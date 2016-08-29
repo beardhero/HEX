@@ -180,9 +180,9 @@ public class WorldRenderer : MonoBehaviour
         }
       }
     }
-    else //Triangle
+    else //Triangle, assumed that the texture's tiles have equilateral triangle dimensions
     {
-      Debug.Log("triangle uvs"); //Assumed that the texture's tiles are equilateral
+      //Debug.Log("triangle uvs"); 
       float uv2x = 1.0f / tileCountW;
       float uv1x = uv2x / 2;
       float uv1y = 1.0f / tileCountH;
@@ -195,7 +195,7 @@ public class WorldRenderer : MonoBehaviour
         if (ht.plate == i)
         {
           IntCoord uvCoord = tileSet.GetUVForType(ht.type);
-          Debug.Log("xCoord: "+ uvCoord.x + "  type: "+ ht.type);
+          //Debug.Log("xCoord: "+ uvCoord.x + "  type: "+ ht.type);
           Vector2 uvOffset = new Vector2((uvCoord.x * uv2.x), (uvCoord.y * uv1.y));
 
           // Origin point

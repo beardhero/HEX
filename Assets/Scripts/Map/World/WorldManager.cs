@@ -103,10 +103,8 @@ public class WorldManager : MonoBehaviour
 
   void SetHeights() //@TODO we should be reading heights from hextile (based on the worldseed?)
   {
-    //Alright, let's get rid of this simplex nonsense and get some heights from the plate tectonics
+    //Alright, let's expand on the simplex with some height adjustments from the plate tectonics
     //Each plate has has two axes it's moving on with a small velocity, each tile shares this movement
-    //Well we're going to have to do this before caching and save heights into the hextiles for access to plates
-    //Then read those heights
     foreach (HexTile ht in activeWorld.tiles)
     {
 	  //Debug.Log (ht.height);

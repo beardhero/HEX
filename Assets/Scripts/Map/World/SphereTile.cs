@@ -12,12 +12,14 @@ public class SphereTile
   public int index;    // The index of the tile in our map. Translates into HexTile.id [set by PolySphere]
   public int[] neighbors;   // Indexes of the surrounding sphere tiles in our map [set by PolySphere] in array form for serialization
   public int plate = -1; //Polysphere
+  public int distanceFromBoundary; //Polysphere
   public float height; //passed to HexTile
   public Dictionary<int, SphereTile> neighborDict;    // A list of unique neighbors
   public List<SphereTile> neighborList;   // This is the first raw list, which will contain duplicates
   public bool boundary; //plate boundary
   public bool plateOrigin;
   public bool colliding; //OnCollisionStay
+  public bool hSet;
   public TileType type;
   //The inital triangles from the subdivided polysphere which we will use to build the spheretile
   public List<Triangle> subTriangles;

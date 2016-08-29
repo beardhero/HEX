@@ -14,10 +14,11 @@ public class Plate {
   public Vector3 spin;
   private List<SphereTile> bound;
   public List<SphereTile> boundary;
-  public float oceanProb = 0.5f;
+  public float oceanProb = 0.6f;
 
-  public Plate(List<SphereTile> t, SphereTile ori)
+  public Plate(List<SphereTile> t, SphereTile ori, int ind)
   {
+    index = ind;
     origin = ori;
     float driftx, drifty, driftz; //drift axis components(randomized)
     tiles = new List<SphereTile>(t);
@@ -60,7 +61,7 @@ public class Plate {
     foreach (SphereTile st in tiles)
     {
       //calculate movement of each tile given the plate movement
-      st.drift = drift + spin + st.center;
+      st.drift = (drift + spin + st.center) / 3;
     }
   }
 }
