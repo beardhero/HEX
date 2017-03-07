@@ -163,7 +163,19 @@ public class SphereTile
   {
     colliding = true;
   }
-
+  public List<TriTile> ToTriTiles()
+  {
+    List<TriTile> tiles = new List<TriTile>();
+    foreach (Triangle t in subTriangles)
+    {
+      List<int> neighbors = new List<int>();
+      neighbors.Add(t.top.index);
+      neighbors.Add(t.right.index);
+      neighbors.Add(t.left.index);
+      tiles.Add(new TriTile(t, plate, neighbors, boundary, height, type));
+    }
+    return tiles;
+  }
   public HexTile ToHexTile()
   {
     Vector3[] verts = new Vector3[1];

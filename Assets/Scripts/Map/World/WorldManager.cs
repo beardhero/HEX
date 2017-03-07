@@ -15,7 +15,7 @@ public class WorldManager : MonoBehaviour
   public static SimplexNoise simplex;
   public static int uvWidth = 100;
   public static int uvHeight;
-
+ 
   // === Private ===
   bool labelDirections;
   //@TODO: These are for creating the heights, and are properties which should be serialized when we go to persistent galaxy.
@@ -28,11 +28,11 @@ public class WorldManager : MonoBehaviour
   {
     get {
       _averageScale = 0;
-      foreach (HexTile ht in activeWorld.tiles)
+      foreach (TriTile tt in activeWorld.triTiles)
       {
-        _averageScale += ht.hexagon.scale;
+        _averageScale += tt.height;
       }
-      _averageScale /= activeWorld.tiles.Count;
+      _averageScale /= activeWorld.triTiles.Count;
       return _averageScale; }
     set { _averageScale = value; }
   }
@@ -44,10 +44,33 @@ public class WorldManager : MonoBehaviour
   Transform currentWorldTrans;
   //int layermask; @TODO: stuff
 
+  //for type changer
+  public Ray ray;
+  public RaycastHit hit;
+  public TileType switchToType;
+  public float heightToSet;
+  //float uvTileWidth = regularTileSet.tileWidth / texWidth;
+  //float uvTileHeight = regularTileSet.tileWidth / texHeight;
+
+  void Update()
+  {
+    //Type Changer
+    if (Input.GetKeyDown(KeyCode.Mouse1))
+    {
+      
+      Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+      //ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+      if (Physics.Raycast(ray, out hit, 100.0f))
+      {
+        StartCoroutine(TypeChange(hit));
+      }
+    }
+  }
+
   void OnDrawGizmos()
   {
     //Debug.Log("going here");
-    DrawAxes();
+    //DrawAxes();
   }
 
   public World Initialize(bool loadWorld = false)
@@ -71,7 +94,7 @@ public class WorldManager : MonoBehaviour
     }
     
     //Seed the world heights
-    SetHeights();
+    //SetHeights();
     
     //CreateOcean();
     
@@ -81,15 +104,15 @@ public class WorldManager : MonoBehaviour
     //currentWorld = new World(WorldSize.Small, WorldType.Verdant, Season.Spring, AxisTilt.Slight);
 
     worldRenderer = GetComponent<WorldRenderer>();
-    //changed this to run RenderPlates instead of RenderWorld
-    foreach (GameObject g in worldRenderer.RenderPlates(activeWorld, regularTileSet))
+    //changed this to run TriPlates instead of HexPlates
+    foreach (GameObject g in worldRenderer.TriPlates(activeWorld, regularTileSet))
     {
       g.transform.parent =currentWorldTrans;
     }
 
     //layermask = 1 << 8;   // Layer 8 is set up as "Chunk" in the Tags & Layers manager
 
-    labelDirections = true;
+    //labelDirections = true;
 
     //DrawHexIndices();
 
@@ -105,10 +128,10 @@ public class WorldManager : MonoBehaviour
   {
     //Alright, let's expand on the simplex with some height adjustments from the plate tectonics
     //Each plate has has two axes it's moving on with a small velocity, each tile shares this movement
-    foreach (HexTile ht in activeWorld.tiles)
+    foreach (TriTile tt in activeWorld.triTiles)
     {
-	  //Debug.Log (ht.height);
-      ht.hexagon.scale = 1f + ht.height;
+	    //Debug.Log (ht.height);
+      tt.height = 1f + tt.height;
     }
 
     /*
@@ -127,36 +150,36 @@ public class WorldManager : MonoBehaviour
   //by making any tile close to the average or below blue, then scaling the blue tiles up to the average.
   void CreateOcean()
   {
-    foreach (HexTile ht in activeWorld.tiles)
+    foreach (TriTile ht in activeWorld.triTiles)
     {
       ht.type = TileType.Blue;
     }
-    TileType typeToSet = TileType.Blue;
-    foreach (HexTile ht in activeWorld.tiles)
+    TileType typeToSet = TileType.Tan;
+    foreach (TriTile ht in activeWorld.triTiles)
     {
       float rand = Random.Range(0, 1f);
       //@TODO: this is just a preliminary variation of the land types
       if (rand <= 0.4f)
-        typeToSet = TileType.Gray;
+        typeToSet = TileType.Brown;
       if (rand > 0.4f)
-        typeToSet = TileType.Green;
-      if (ht.hexagon.scale >= averageScale*0.99f)
+        typeToSet = TileType.Red;
+      if (ht.height >= averageScale*0.99f)
       {
         ht.type = typeToSet;
       }
     }
-    foreach (HexTile ht in activeWorld.tiles)
+    foreach (TriTile ht in activeWorld.triTiles)
     {
       if (ht.type == TileType.Blue)
       {
-        ht.hexagon.Scale(averageScale*0.99f / ht.hexagon.scale);
+        ht.height *= (averageScale*0.99f / ht.height);
       }
     }
   }
   //So now with the land masses, we're going to make the "biomes" more coherent like we did in Zone -> SpreadGround and RefineGround
   void RefineTypes()
   {
-    foreach (HexTile ht in activeWorld.tiles)
+    foreach (TriTile ht in activeWorld.triTiles)
     {
       //int i = 0;
       //foreach (HexTile h in ht.ne) ;
@@ -252,5 +275,74 @@ public class WorldManager : MonoBehaviour
       x.text = ht.index.ToString();
       t.parent = currentWorldTrans;
     }
+  }
+
+  public IEnumerator TypeChange(RaycastHit hit)
+  {
+    Debug.Log("hit");
+    float uv2x = 1.0f / worldRenderer.tileCountW;
+    float uv1x = uv2x / 2;
+    float uv1y = 1.0f / worldRenderer.tileCountH;
+    Vector2 uv0 = Vector2.zero,
+            uv1 = new Vector2(uv1x, uv1y),
+            uv2 = new Vector2(uv2x, 0);
+    //Debug.Log("hit");
+    float last = 9999999;
+    TriTile hitTile = new TriTile();
+    foreach (TriTile ht in activeWorld.triTiles)
+    {
+      Vector3 center = new Vector3(ht.center.x, ht.center.y, ht.center.z);
+      float test = (center - hit.point).sqrMagnitude;
+      if (test < last)
+      {
+        last = test;
+        hitTile = ht;
+      }
+    }
+    //IntCoord oldCoord = regularTileSet.GetUVForType(hitTile.type);
+    //Vector2 oldOffset = new Vector2((oldCoord.x * uv2.x), (oldCoord.y * uv1.y));
+    
+    //Debug.Log(hitTile.type);
+    //Debug.Log(worldRenderer.uvTileWidth);
+    //IntCoord newCoord = new IntCoord(regularTileSet.GetUVForType(hitTile.type).x, regularTileSet.GetUVForType(hitTile.type).y);
+    //final offset
+    
+    //Vector2 uvOffset = newOffset - oldOffset;
+    //Change uvs
+    MeshCollider meshCollider = hit.collider as MeshCollider;
+    Mesh mesh = meshCollider.sharedMesh;
+    Vector3[] vertices = mesh.vertices;
+    Vector2[] uvs = mesh.uv;
+    int[] triangles = mesh.triangles;
+    //change height
+    if (heightToSet == 0)
+    {
+      heightToSet = averageScale;
+    }
+    vertices[triangles[hit.triangleIndex * 3]] /= vertices[triangles[hit.triangleIndex * 3]].magnitude;
+    vertices[triangles[hit.triangleIndex * 3]] *= heightToSet;
+
+    vertices[triangles[hit.triangleIndex * 3 + 1]] /= vertices[triangles[hit.triangleIndex * 3 + 1]].magnitude;
+    vertices[triangles[hit.triangleIndex * 3 + 1]] *= heightToSet;
+
+    vertices[triangles[hit.triangleIndex * 3 + 2]] /= vertices[triangles[hit.triangleIndex * 3 + 2]].magnitude;
+    vertices[triangles[hit.triangleIndex * 3 + 2]] *= heightToSet;
+
+    //change type
+    if (switchToType != TileType.None)
+    {
+      Debug.Log(hitTile.type);
+      hitTile.type = switchToType;
+      IntCoord newCoord = regularTileSet.GetUVForType(switchToType);
+      Vector2 newOffset = new Vector2((newCoord.x * uv2.x), (newCoord.y * uv1.y));
+      uvs[triangles[hit.triangleIndex * 3]] = uv0 + newOffset;
+      uvs[triangles[hit.triangleIndex * 3 + 1]] = uv1 + newOffset;
+      uvs[triangles[hit.triangleIndex * 3 + 2]] = uv2 + newOffset;
+    }
+    mesh.vertices = vertices;
+    mesh.uv = uvs;
+   
+    Transform hitTransform = hit.collider.transform;
+    yield return null;
   }
 }

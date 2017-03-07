@@ -10,18 +10,18 @@ using System.Collections;
 using System.Collections.Generic;
 using Random = UnityEngine.Random;
 
-public enum GameState {None, Caching, MainMenu, WorldMap, ZoneMap, WorldDuel};
+public enum RelativityState {None, Caching, MainMenu, WorldMap, ZoneMap, WorldDuel};
 
 public class GameManager : MonoBehaviour
 {
   // === Const & Inspector Cache ===
-  public GameState beginningState = GameState.WorldMap;
-  public const string gameSeed = "sixtynine";
+  public RelativityState beginningState = RelativityState.WorldMap;
+  public const string gameSeed = "whyisthishappening";
 
   // === Static Cache ===
-  static GameState state;
+  static RelativityState state;
   public static Transform myTrans;
-  public static GameState State {get{return state;} set{}}
+  public static RelativityState State {get{return state;} set{}}
   public static Camera cam;
   public static MainUI mainUI;
 
@@ -59,7 +59,7 @@ public class GameManager : MonoBehaviour
     bool loading;
     switch (state)
     {
-      case GameState.WorldDuel:
+      case RelativityState.WorldDuel:
         loading = false; //@TODO: still caching on duel
         InitializeWorld(loading);
 
@@ -67,16 +67,16 @@ public class GameManager : MonoBehaviour
         combatManager.BeginDuel();
       break;
 
-      case GameState.WorldMap:
+      case RelativityState.WorldMap:
         loading = true;
         InitializeWorld(loading);
       break;
 
-      case GameState.ZoneMap:
+      case RelativityState.ZoneMap:
         InitializeZone();
       break;
 
-      case GameState.Caching:
+      case RelativityState.Caching:
         loading = false;
         InitializeWorld(loading);
 
@@ -161,7 +161,7 @@ public class GameManager : MonoBehaviour
   {
     switch (state)
     {
-      case GameState.ZoneMap:
+      case RelativityState.ZoneMap:
         roundManager.OnTapInput(tap);
       break;
     }

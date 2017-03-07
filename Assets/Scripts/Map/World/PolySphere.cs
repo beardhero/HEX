@@ -11,8 +11,8 @@ public class PolySphere
   public GameObject go; //Using this transform to rotate around centers of hexes
   public Vector3 origin;
   public int subdivisions;
-  public static int maxPlates = 24; //max number of tectonic plates
-  public static int minPlates = 12;
+  public static int maxPlates = 42; //max number of tectonic plates
+  public static int minPlates = 24;
   public float scale = 1;
   public float avgTileHeight = 0;
   public float tileCount;
@@ -21,6 +21,7 @@ public class PolySphere
   public List<List<Triangle>> subdividedTris;
   public List<Triangle> finalTris;    // The finest level of subdivided tris
   public List<HexTile> unitHexes;
+  public List<TriTile> triTiles;
   public List<SphereTile> sTiles; //the tiles on this sphere
   public List<List<SphereTile>> tPlates;
   public List<Plate> plates;
@@ -51,7 +52,25 @@ public class PolySphere
     AvgHeight();
     CorrectSunkenTiles();
     TectonicPlates(); //Populates plates and creates stress forces between them.
+    //Mortyfy();
+    CacheTris();
     CacheHexes(); //Converts to HexTiles for serialization
+  }
+  void Mortyfy()
+  {
+    foreach (SphereTile t in sTiles)
+    {
+      t.type = TileType.Tan;
+      if (t.height > avgTileHeight + .2f)
+      {
+        t.type = TileType.Brown;
+      }
+      if (t.center.z < 0)
+      {
+        t.height = avgTileHeight;
+        t.type = TileType.Tan;
+      }
+    }
   }
   void HeightSeed()
   {
@@ -59,6 +78,10 @@ public class PolySphere
     {
       st.height = 1f;
     }
+  }
+  void PerlinHeights()
+  {
+    
   }
   void SimplexHeights()
   {
@@ -86,16 +109,34 @@ public class PolySphere
     }
     avgTileHeight /= tileCount;
   }
+
   void CorrectSunkenTiles()
   {
     foreach (SphereTile st in sTiles)
     {
       if (st.height < avgTileHeight)
       {
-        st.height = avgTileHeight + 0.01f;
+        st.height = avgTileHeight + 0.1f;
       }
     }
   }
+
+  void CacheTris()
+  {
+    triTiles = new List<TriTile>();
+    //index
+    int ind = 0;
+    foreach (SphereTile st in sTiles)
+    {
+      foreach(TriTile tt in st.ToTriTiles())
+      {
+        tt.index = ind;
+        ind++;
+        triTiles.Add(tt);
+      }
+    }
+  }
+  
   void CacheHexes()
   {
     unitHexes = new List<HexTile>();
@@ -178,11 +219,11 @@ public class PolySphere
       //Save our subdivided levels
       subdividedTris.Add(nextTris); 
     }
-    
-    //Create SphereTiles, give them neighbors
-    
-    foreach (Triangle tri in nextTris)
+    finalTris = new List<Triangle>(nextTris);
+    //Create SphereTiles
+    foreach (Triangle tri in finalTris)
     {
+      
       //Tiles to assign
       SphereTile st1 = null, 
                  st2 = null, 
@@ -289,7 +330,7 @@ public class PolySphere
     //Make the plates!
     BuildPlates();
     //Create stress forces between plates
-    Tectonics();
+    //Tectonics();
   }
 
   void Tectonics()//List<SphereTile> setting)
@@ -326,13 +367,13 @@ public class PolySphere
             {
               //land
               //max height and adjust height with drift component in center direction, (a dot b)/|b|
-              st.type = TileType.Sand;
+              st.type = TileType.Blue;
               st.height += (pressureOnTile);
             }
             if (!p.oceanic && neighbor.oceanic)
             {
               //subducted, add a little more to the land at first then drop off
-              st.type = TileType.Sand;
+              st.type = TileType.Blue;
               st.height = avgTileHeight + .02f;
               p.subducted = true;
               st.height += (pressureOnTile);
@@ -349,7 +390,7 @@ public class PolySphere
               }
               else
               {
-                st.type = TileType.Sand;
+                st.type = TileType.Blue;
                 st.height = avgTileHeight + .02f;
               }
             }
@@ -365,7 +406,6 @@ public class PolySphere
       FillPlate(p.boundary, dFromB, p);
     }
   }
-
   void FillPlate(List<SphereTile> tiles, int dFromB, Plate p) //recursive
   {
     dFromB++;
@@ -392,15 +432,15 @@ public class PolySphere
           if (p.oceanic)
           {
             //Debug.Log(p.oceanic);
-            stn.type = TileType.Blue;
+            stn.type = TileType.Tan;
             stn.height = avgTileHeight;
           }
           if (!p.oceanic)
           {
-            stn.type = TileType.Sand;
+            stn.type = TileType.Brown;
             if (st.distanceFromBoundary > Random.Range(3,6))
             {
-              st.type = TileType.Green;
+              st.type = TileType.Brown;
             }
             stn.height += (pressureOnTile);
           }

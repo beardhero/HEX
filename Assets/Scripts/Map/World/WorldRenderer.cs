@@ -9,6 +9,8 @@ public class WorldRenderer : MonoBehaviour
   public float tileHeight;
   public int tileCountW;
   public int tileCountH;
+  public float uvTileWidth;
+  public float uvTileHeight;
   public bool hexagonal; // false for triangle uvs, true for hexagonal
   public List<List<SphereTile>> hPlates;
   bool controlx;
@@ -18,7 +20,115 @@ public class WorldRenderer : MonoBehaviour
   PolySphere activePolySphere;
 
   //Going to make a new render function to render plates instead
-  public List<GameObject> RenderPlates(World world, TileSet tileSet)
+  public List<GameObject> TriPlates(World world, TileSet tileSet)
+  {
+    List<GameObject> output = new List<GameObject>();
+    //Populate polysphere.hPlates based on hextile plate index
+    //First find number of plates
+    /*
+    hPlates = new List<List<HexTile>>();
+    for (int i = 0; i <= world.numberOfPlates; i++)
+    {
+      hPlates.Add(new List<HexTile>());
+    }
+    */
+
+
+    //Create a mesh for each plate and put it in the list of outputs
+    for (int i = 0; i < PolySphere.maxPlates; i++)
+    {
+      output.Add(TriPlate(world, tileSet, i));
+    }
+    return output;
+  }
+
+  public GameObject TriPlate(World world, TileSet tileSet, int i)
+  {
+    GameObject output = (GameObject)Instantiate(worldPrefab, Vector3.zero, Quaternion.identity);
+
+    MeshFilter myFilter = output.GetComponent<MeshFilter>();
+    MeshCollider myCollider = output.GetComponent<MeshCollider>();
+
+    SerializableVector3 origin = world.origin;
+    List<Vector3> vertices = new List<Vector3>();
+    List<int> triangles = new List<int>();
+    List<Vector3> normals = new List<Vector3>();
+    List<Vector2> uvs = new List<Vector2>();
+
+    //Debug.Log("triangle uvs"); 
+    float uv2x = 1.0f / tileCountW;
+    float uv1x = uv2x / 2;
+    float uv1y = 1.0f / tileCountH;
+    Vector2 uv0 = Vector2.zero,
+            uv2 = new Vector2(uv2x, 0),
+            uv1 = new Vector2(uv1x, uv1y);
+    //Generate plate
+    foreach (TriTile tt in world.triTiles)
+    {
+      if (tt.plate == i)
+      {
+        IntCoord uvCoord = tileSet.GetUVForType(tt.type);
+        //Debug.Log("xCoord: "+ uvCoord.x + "  type: "+ ht.type);
+        Vector2 uvOffset = new Vector2((uvCoord.x * uv2.x), (uvCoord.y * uv1.y));
+        Vector3 org = new Vector3(origin.x, origin.y, origin.z);
+        //Origin point
+        vertices.Add(origin);
+        uvs.Add(uv1 + uvOffset);
+        normals.Add(tt.center - origin);
+        int originIndex = vertices.Count - 1;
+
+        // Triangle
+        Vector3 v1 = tt.v1;
+        Vector3 v2 = tt.v2;
+        Vector3 v3 = tt.v3;
+
+        vertices.Add(v1);
+        normals.Add((org + v1));
+        uvs.Add(uv0 + uvOffset);
+
+        vertices.Add(v2);
+        normals.Add((org + v2));
+        uvs.Add(uv1 + uvOffset);
+
+        vertices.Add(v3);
+        normals.Add((org + v3));
+        uvs.Add(uv2 + uvOffset);
+
+        //face triangle
+        triangles.Add(vertices.Count-1); //3
+        triangles.Add(vertices.Count - 3); //1
+        triangles.Add(vertices.Count - 2); //2
+
+        //three more triangles to connect the origin
+        triangles.Add(vertices.Count - 3);
+        //triangles.Add(vertices.Count - 4); 
+        triangles.Add(originIndex);
+        triangles.Add(vertices.Count - 2);
+
+        triangles.Add(vertices.Count - 2);
+        //triangles.Add(vertices.Count - 4);
+        triangles.Add(originIndex);
+        triangles.Add(vertices.Count - 1);
+
+        triangles.Add(vertices.Count - 1);
+        //triangles.Add(vertices.Count - 4);
+        triangles.Add(originIndex);
+        triangles.Add(vertices.Count - 3);
+      }
+    }
+    Mesh m = new Mesh();
+    m.vertices = vertices.ToArray();
+    m.triangles = triangles.ToArray();
+    m.normals = normals.ToArray();
+    m.uv = uvs.ToArray();
+
+    myCollider.sharedMesh = m;
+    myFilter.sharedMesh = m;
+
+    return output;
+  }
+
+  public List<GameObject> HexPlates(World world, TileSet tileSet)
   {
     List<GameObject> output = new List<GameObject>();
     //Populate polysphere.hPlates based on hextile plate index
@@ -35,11 +145,12 @@ public class WorldRenderer : MonoBehaviour
     //Create a mesh for each plate and put it in the list of outputs
     for (int i = 0; i < PolySphere.maxPlates; i++)
     {
-      output.Add(RPlate(world, tileSet, i));
+      output.Add(HexPlate(world, tileSet, i));
     }
     return output;
   }
-  public GameObject RPlate(World world, TileSet tileSet, int i)
+
+  public GameObject HexPlate(World world, TileSet tileSet, int i)
   {
     GameObject output = (GameObject)Instantiate(worldPrefab, Vector3.zero, Quaternion.identity);
 
@@ -59,8 +170,8 @@ public class WorldRenderer : MonoBehaviour
       float texHeight = tileSet.texture.height;
       float texWidth = tileSet.texture.width;
       //float root3 = Mathf.Sqrt(3);
-      float uvTileWidth = tileSet.tileWidth / texWidth;
-      float uvTileHeight = tileSet.tileWidth / texHeight;
+      uvTileWidth = tileSet.tileWidth / texWidth;
+      uvTileHeight = tileSet.tileWidth / texHeight;
       float side = uvTileWidth / 2;
       float radius = Mathf.Sqrt((3 * side * side) / 4);
 
@@ -318,6 +429,8 @@ public class WorldRenderer : MonoBehaviour
 
     return output; 
   }
+  //Redacted functions
+  /*
   public List<GameObject> RenderWorld(World world, TileSet tileSet)
   {
     List<GameObject> output = new List<GameObject>();
@@ -331,7 +444,6 @@ public class WorldRenderer : MonoBehaviour
     }
     return output;
   }
-
   public GameObject Quadrant(World world, TileSet tileSet, bool cx, bool cy, bool cz, int it)
   {
     //Debug.Log("ITERATION "+it);
@@ -685,7 +797,7 @@ public class WorldRenderer : MonoBehaviour
     }
   }
   */
-
+  //Debug
   /*
   void LabelNeighbors(PolySphere sphere)
   {

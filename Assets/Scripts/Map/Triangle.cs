@@ -1,12 +1,14 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+
 
 public class Triangle
 {
   public Vector3 v1, v2, v3, center;
   public int subdivisionLevel, index;
-
+  public float height;
   public Triangle top, right, left;
   public Triangle instance, parent, childMid, childTop, childLeft, childRight;
 
@@ -26,7 +28,6 @@ public class Triangle
     //parent = p;
     triforcePosition = tp;
     subdivisionLevel = sl;
-    index = -1;
   }
 
   // Called for initial polygon

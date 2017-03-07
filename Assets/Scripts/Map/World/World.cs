@@ -25,6 +25,7 @@ public class World
   public static int numberOfPlates; //Set by polysphere on cache
 
   [HideInInspector] public List<HexTile> tiles;
+  [HideInInspector] public List<TriTile> triTiles;
   [HideInInspector] public List<HexTile> pentagons;
   //[HideInInspector] public List<Plate> plates;
   [HideInInspector] public Dictionary<int, int> tileToPlate; //key hextile.index, value plate index
@@ -87,12 +88,16 @@ public class World
       PolySphere sphere = new PolySphere(Vector3.zero, scale, subdivisions);
       //make the tileToPlate dict
       tileToPlate = new Dictionary<int, int>();
-      CacheHexes(sphere);
+      //CacheHexes(sphere); @TODO Modes
+      CacheTriangles(sphere);
     }
     else
       Debug.Log("tiles not null during cache prep");
   }
-  
+  public void CacheTriangles(PolySphere s)
+  {
+    triTiles = new List<TriTile>(s.triTiles);
+  }
   public void CacheHexes(PolySphere s)  // Executed by the cacher.  @CHANGE: Now directly converting spheretiles to hextiles
   {
     
@@ -124,4 +129,5 @@ public class World
     circumferenceInTiles = (int)Mathf.Ceil(circumference / dividingSide.magnitude);
     */
   }
+
 }
